@@ -72,6 +72,12 @@
         .screen-shaking {
             animation: screenShakeAnim 0.35s ease-in-out;
         }
+
+        .oil-splatter-bg {
+            background: radial-gradient(circle at 30% 30%, rgba(15, 23, 42, 0.95) 0%, rgba(0, 0, 0, 0.98) 70%),
+                        radial-gradient(circle at 70% 60%, rgba(30, 41, 59, 0.9) 0%, rgba(2, 6, 23, 0.98) 60%);
+            backdrop-filter: blur(16px);
+        }
     </style>
 </head>
 <body class="neon-grid-bg text-white min-h-screen flex flex-col justify-between p-2 md:p-5 select-none relative overflow-x-hidden">
@@ -244,22 +250,12 @@
 
             <!-- Cooperative 4-Step Pipeline Workspace -->
             <div id="action-box" class="relative bg-slate-950/95 neon-border-cyan rounded-3xl p-4 md:p-6 shadow-2xl flex flex-col items-center text-center neon-glow hud-corner">
-                
-                <!-- Oil Slick EMP Overlay -->
-                <div id="slick-overlay" class="hidden absolute inset-0 rounded-3xl z-30 flex flex-col items-center justify-center p-6 text-center bg-slate-950/95 backdrop-blur-md">
-                    <span class="text-5xl animate-bounce mb-3">🛢️</span>
-                    <h4 class="text-2xl font-racing text-amber-400 mb-1">상대 카트의 오일 슬릭 교란탄 피격!</h4>
-                    <p class="text-sm text-slate-200 mb-4">카트 전면 윈드실드에 오일 얼룩이 발생했습니다! 와이퍼를 연속 클릭해 시야를 회복하세요!</p>
-                    <button onclick="cleanSlick()" class="px-6 py-3 bg-gradient-to-r from-cyan-400 to-teal-300 text-slate-950 font-racing text-lg rounded-xl shadow-lg active:scale-95">
-                        🧹 윈드실드 와이퍼 가동 (<span id="slick-wipe-count">5</span>회 남음)
-                    </button>
-                </div>
 
                 <!-- 5-Second Overheat Lockout Overlay -->
                 <div id="lockout-penalty-box" class="hidden absolute inset-0 bg-slate-950/95 rounded-3xl z-40 flex flex-col items-center justify-center p-6 text-center border-4 border-rose-500 danger-siren backdrop-blur-md">
                     <span class="text-5xl animate-bounce mb-2">⚠️</span>
-                    <h4 class="text-2xl font-racing text-rose-400 mb-1">엔진 휠 스핀 과열! 긴급 냉각 중</h4>
-                    <p class="text-xs md:text-sm text-slate-200 mb-3">
+                    <h4 id="lockout-title" class="text-2xl font-racing text-rose-400 mb-1">엔진 휠 스핀 과열! 긴급 냉각 중</h4>
+                    <p id="lockout-desc" class="text-xs md:text-sm text-slate-200 mb-3">
                         기울기, 절편 또는 대입 연산 오류! 무작위 찍기를 방지하기 위해 5초간 콘솔이 잠금 처리됩니다.<br>
                         팀원들과 $\Delta y / \Delta x$ 및 $y$절편 부호를 다시 정밀 검산하세요!
                     </p>
@@ -407,26 +403,44 @@
                 <button onclick="chooseBoosterPayload('hyper_nitro')" class="group p-4 rounded-2xl bg-gradient-to-b from-cyan-950/90 to-slate-950 border-2 border-cyan-400 hover:border-yellow-300 flex flex-col items-center gap-2 transition hover:scale-105 active:scale-95 shadow-xl">
                     <span class="text-4xl">🚀</span>
                     <span class="font-racing text-base text-cyan-300">하이퍼 니트로</span>
-                    <span class="text-[11px] text-slate-300 leading-tight">순수 음속 가속 도약<br><b class="text-yellow-300">서킷 즉시 완주 (+1점)</b></span>
+                    <span class="text-[11px] text-slate-300 leading-tight">순수 음속 가속 질주<br><b class="text-cyan-300">+1점 + 다음 1단계 자동 패스!</b></span>
                 </button>
 
                 <!-- Booster 2: Oil Slick Shell -->
                 <button onclick="chooseBoosterPayload('oil_slick')" class="group p-4 rounded-2xl bg-gradient-to-b from-amber-950/90 to-slate-950 border-2 border-amber-500 hover:border-yellow-300 flex flex-col items-center gap-2 transition hover:scale-105 active:scale-95 shadow-xl">
                     <span class="text-4xl">🛢️</span>
                     <span class="font-racing text-base text-amber-300">오일 슬릭탄</span>
-                    <span class="text-[11px] text-slate-300 leading-tight">적 트랙 시야 교란<br><b class="text-amber-300">완주 + 적 5회 와이퍼</b></span>
+                    <span class="text-[11px] text-slate-300 leading-tight">적 윈드실드 전면 오일 차단<br><b class="text-amber-300">+1점 + 적 5회 와이퍼 클릭</b></span>
                 </button>
 
-                <!-- Booster 3: Quantum Warp -->
+                <!-- Booster 3: Quantum Warp EMP -->
                 <button onclick="chooseBoosterPayload('quantum_warp')" class="group p-4 rounded-2xl bg-gradient-to-b from-fuchsia-950/90 to-slate-950 border-2 border-fuchsia-400 hover:border-white flex flex-col items-center gap-2 transition hover:scale-105 active:scale-95 shadow-xl">
-                    <span class="text-4xl">✨</span>
-                    <span class="font-racing text-base text-fuchsia-300">양자 도약 펄스</span>
-                    <span class="text-[11px] text-slate-300 leading-tight">광속 차원 게이트 돌파<br><b class="text-yellow-300">초고속 즉각 통과 (+1점)</b></span>
+                    <span class="text-4xl">⚡</span>
+                    <span class="font-racing text-base text-fuchsia-300">양자 도약 EMP</span>
+                    <span class="text-[11px] text-slate-300 leading-tight">상대 엔진 전자기 정지<br><b class="text-fuchsia-300">+1점 + 적 3.5초 엔진 스턴</b></span>
                 </button>
             </div>
 
             <button onclick="document.getElementById('payload-modal').classList.add('hidden')" class="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl font-mono-code">
                 닫기
+            </button>
+        </div>
+    </div>
+
+    <!-- Full-Screen High-Impact Oil Slick Overlay -->
+    <div id="slick-overlay" class="hidden fixed inset-0 z-50 oil-splatter-bg flex flex-col items-center justify-center p-6 text-center select-none animate-fade-in">
+        <div class="relative max-w-md w-full bg-slate-950/90 border-4 border-amber-500 rounded-3xl p-6 md:p-8 shadow-[0_0_60px_rgba(245,158,11,0.6)] flex flex-col items-center">
+            <!-- Splatter Icons -->
+            <div class="flex items-center justify-center gap-3 text-5xl mb-2 animate-bounce">
+                <span>🛢️</span><span>⬛</span><span>🛢️</span>
+            </div>
+            <h4 class="text-2xl md:text-3xl font-racing text-amber-400 mb-1">상대 카트의 오일 슬릭탄 피격!</h4>
+            <p class="text-xs md:text-sm text-slate-200 mb-5 leading-relaxed">
+                카트 전면 윈드실드에 시커먼 오일 얼룩이 뒤덮였습니다!<br>
+                와이퍼를 연속으로 클릭하여 시야를 회복하세요!
+            </p>
+            <button onclick="cleanSlick()" class="w-full py-4 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 font-racing text-xl rounded-2xl shadow-xl active:scale-95 transition transform">
+                🧹 윈드실드 와이퍼 가동 (<span id="slick-wipe-count" class="text-2xl font-mono text-red-600 font-bold">5</span>회 남음)
             </button>
         </div>
     </div>
@@ -572,6 +586,7 @@
     <!-- Main Game Logic and Firebase Synchronizer -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -590,6 +605,9 @@
         try {
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
+            const auth = getAuth(app);
+            await signInAnonymously(auth);
+
             const badge = document.getElementById('db-status-badge');
             if (badge) {
                 badge.innerText = "🟢 클라우드 DB 정상 연결!";
@@ -624,11 +642,7 @@
         let lastRenderedStage = -1;
         let lastRenderedTarget = -1;
         let showGridPlane = true;
-
-        window.toggleGridDisplay = function() {
-            showGridPlane = !showGridPlane;
-            const btn = document.getElementById('grid-toggle-btn');
-            if (btn) {
+        let enemyMiniFeedFlashTimer = 0;
                 btn.innerText = showGridPlane ? "📐 좌표 격자: ON" : "📐 좌표 격자: OFF";
                 btn.className = showGridPlane 
                     ? "px-2.5 py-1 bg-slate-900/90 hover:bg-cyan-950 border border-cyan-400/60 rounded-full text-[11px] font-mono-code text-cyan-300 shadow transition active:scale-95"
@@ -767,34 +781,34 @@
                     x1: -2,
                     y1: -1,
                     x2: 1,
-                    y2: 2,
-                    deltaX: 3,
-                    deltaY: 3,
-                    xGate: 3,
-                    yGate: 4,
-                    slopeChoices: [1, 2, -1, -2],
-                    slopeCorrectIndex: 0
-                };
-            }
-            return mission;
-        }
-
-        function triggerLockoutPenalty() {
+        function triggerLockoutPenalty(isEmp = false, customDurationSec = 5.0) {
             if (isLockedOut) return;
             isLockedOut = true;
             sfx.error();
 
             const lockoutBox = document.getElementById('lockout-penalty-box');
+            const titleEl = document.getElementById('lockout-title');
+            const descEl = document.getElementById('lockout-desc');
             const timerEl = document.getElementById('lockout-timer-num');
+
+            if (isEmp) {
+                titleEl.innerText = "⚡ 상대 카트의 양자 EMP 피격! 엔진 긴급 정지";
+                descEl.innerText = "상대 팀이 발사한 전자기 EMP 충격파로 인해 카트 전자 제어 콘솔이 3.5초간 일시 마비되었습니다!";
+            } else {
+                titleEl.innerText = "⚠️ 엔진 휠 스핀 과열! 긴급 냉각 중";
+                descEl.innerText = "기울기, 절편 또는 대입 연산 오류! 무작위 찍기를 방지하기 위해 5초간 콘솔이 잠금 처리됩니다.\n팀원들과 계산을 다시 정밀 검산하세요!";
+            }
+
             lockoutBox.classList.remove('hidden');
-            timerEl.innerText = '5.0';
+            timerEl.innerText = customDurationSec.toFixed(1);
 
             if (lockoutTimerInterval) clearInterval(lockoutTimerInterval);
             const startAt = Date.now();
+            const totalMs = customDurationSec * 1000;
 
             lockoutTimerInterval = setInterval(() => {
                 const elapsed = Date.now() - startAt;
-                const left = Math.max(0, (5000 - elapsed) / 1000);
+                const left = Math.max(0, (totalMs - elapsed) / 1000);
                 timerEl.innerText = left.toFixed(1);
 
                 if (left <= 0) {
@@ -803,7 +817,7 @@
                     isLockedOut = false;
                     lockoutBox.classList.add('hidden');
                     sfx.playTone(520, 'sine', 0.15, 0.2);
-                    showStepFeedback("⚡ [엔진 냉각 완료] 레일 제어 콘솔이 정상 복구되었습니다. 신중하게 입력하세요!", false);
+                    showStepFeedback("⚡ [콘솔 정상화] 레일 제어 콘솔이 정상 복구되었습니다!", false);
                 }
             }, 100);
         }
@@ -863,6 +877,8 @@
                 lastPing: null,
                 slickTarget: null,
                 slickId: 0,
+                empTarget: null,
+                empId: 0,
                 updatedAt: Date.now()
             };
         }
@@ -877,7 +893,7 @@
 
             const myMemberObj = { id: myPlayerId, name: currentUserName, lastSeen: Date.now(), joinedAt: myJoinedAt };
 
-            // Zero-cost BroadcastChannel for instant local peer synchronization
+            // BroadcastChannel for instant free zero-latency local sync
             try {
                 if (window.BroadcastChannel) {
                     if (bc) bc.close();
@@ -887,6 +903,8 @@
                         if (!msg) return;
                         if (msg.type === 'LOCAL_PING' && msg.team === myTeam) {
                             addTacticalPingCoords(msg.x, msg.y, msg.sender);
+                        } else if (msg.type === 'SYNC_STATE' && msg.payload) {
+                            applyRoomState(msg.payload);
                         }
                     };
                 }
@@ -902,7 +920,7 @@
             else initialData.redMembers = [myMemberObj];
             applyRoomState(initialData);
 
-            // One-time registration upon join to Firestore root collection
+            // Register upon join to Firestore
             try {
                 if (db) {
                     const roomRef = doc(db, 'slope_rider_rooms', currentRoomCode);
@@ -974,9 +992,18 @@
             data.redMembers = cleanMemberList(data.redMembers || []);
             lastKnownRoomData = data;
 
+            // Handle Booster Animation
             if (data.lastBooster && (!window.lastObservedBoostId || window.lastObservedBoostId !== data.lastBooster.id)) {
                 window.lastObservedBoostId = data.lastBooster.id;
-                triggerSonicLeapLaunch(data.lastBooster.fromTeam, data.lastBooster.mission, data.lastBooster.payloadType);
+
+                if (data.lastBooster.fromTeam === myTeam) {
+                    // Only launch on the main track if it's OUR team's booster!
+                    triggerSonicLeapLaunch(data.lastBooster.fromTeam, data.lastBooster.mission, data.lastBooster.payloadType);
+                } else {
+                    // Opponent completed their track! Trigger sound and flash in the Opponent Mini Feed
+                    sfx.playTone(300, 'sawtooth', 0.3, 0.25);
+                    enemyMiniFeedFlashTimer = Date.now() + 2500;
+                }
             }
 
             if (data.lastPing && (!window.lastObservedPingId || window.lastObservedPingId !== data.lastPing.id)) {
@@ -986,9 +1013,16 @@
                 }
             }
 
+            // Handle Incoming Oil Slick Shell
             if (data.slickTarget === myTeam && (!window.lastObservedSlickId || window.lastObservedSlickId !== data.slickId)) {
                 window.lastObservedSlickId = data.slickId;
                 activateSlickCover();
+            }
+
+            // Handle Incoming Quantum Warp EMP
+            if (data.empTarget === myTeam && (!window.lastObservedEmpId || window.lastObservedEmpId !== data.empId)) {
+                window.lastObservedEmpId = data.empId;
+                triggerLockoutPenalty(true, 3.5);
             }
 
             updateRaceScoreboard(data.blueScore || 0, data.redScore || 0);
@@ -1009,6 +1043,11 @@
 
         async function syncStateUpdate(nextData) {
             applyRoomState(nextData);
+            if (bc) {
+                try {
+                    bc.postMessage({ type: 'SYNC_STATE', payload: nextData });
+                } catch (e) {}
+            }
             if (!useFallback && db) {
                 try {
                     const roomRef = doc(db, 'slope_rider_rooms', currentRoomCode);
@@ -1309,43 +1348,70 @@
             const mission = myTeam === 'blue' ? data.blueMission : data.redMission;
 
             sfx.hyperBoost();
+            // Launch immediately on my local canvas!
             triggerSonicLeapLaunch(myTeam, mission, payloadType);
 
             const nextData = { ...data };
+            const boosterId = Date.now();
+            window.lastObservedBoostId = boosterId;
+
             nextData.lastBooster = {
                 fromTeam: myTeam,
                 mission: mission,
                 payloadType: payloadType,
-                id: Date.now()
+                id: boosterId
             };
 
-            if (payloadType === 'oil_slick') {
-                nextData.slickTarget = enemyTeam;
-                nextData.slickId = Date.now();
-                showStepFeedback(`🛢️ [${mission.trackName}] 1,200 km/h 음속 돌파! 상대 트랙에 오일 슬릭 살포!`, false);
-            } else {
-                showStepFeedback(`⚡ [${mission.trackName}] 1,200 km/h 초광속 음속 도약! 소닉 붐 폭발!`, false);
-            }
+            // Calculate updated scores and next circuit setup
+            const currentScore = myTeam === 'blue' ? (data.blueScore || 0) : (data.redScore || 0);
+            const nextScore = Math.min(7, currentScore + 1);
+            const nextTargetNum = nextScore + 1;
+            const nextMission = generateLinearRailMission(nextTargetNum);
 
-            setTimeout(async () => {
-                const latest = lastKnownRoomData || nextData;
-                const hitData = { ...latest };
-
+            // Distinct tactical payload actions
+            if (payloadType === 'hyper_nitro') {
+                // Hyper Nitro: +1 point AND automatic skip of next circuit's stage 0! (Starts at stage 1!)
                 if (myTeam === 'blue') {
-                    hitData.blueScore = Math.min(7, (hitData.blueScore || 0) + 1);
-                    const nextTargetNum = hitData.blueScore + 1;
-                    hitData.blueStage = 0;
-                    hitData.blueMission = generateLinearRailMission(nextTargetNum);
+                    nextData.blueScore = nextScore;
+                    nextData.blueStage = 1; // Stage 0 automatically solved!
+                    nextData.blueMission = nextMission;
                 } else {
-                    hitData.redScore = Math.min(7, (hitData.redScore || 0) + 1);
-                    const nextTargetNum = hitData.redScore + 1;
-                    hitData.redStage = 0;
-                    hitData.redMission = generateLinearRailMission(nextTargetNum);
+                    nextData.redScore = nextScore;
+                    nextData.redStage = 1;
+                    nextData.redMission = nextMission;
                 }
+                showStepFeedback(`🚀 [하이퍼 니트로 가동!] 1,200 km/h 질주! 서킷 완주 (+1점) & 다음 서킷 1단계 자동 결속 보너스!`, false);
 
-                hitData.updatedAt = Date.now();
-                await syncStateUpdate(hitData);
-            }, 1100);
+            } else if (payloadType === 'oil_slick') {
+                // Oil Slick: +1 point AND fling black oil slick onto enemy screen
+                if (myTeam === 'blue') {
+                    nextData.blueScore = nextScore;
+                    nextData.blueStage = 0;
+                    nextData.blueMission = nextMission;
+                } else {
+                    nextData.redScore = nextScore;
+                    nextData.redStage = 0;
+                    nextData.redMission = nextMission;
+                }
+                nextData.slickTarget = enemyTeam;
+                nextData.slickId = boosterId;
+                showStepFeedback(`🛢️ [오일 슬릭탄 발사!] 서킷 완주 (+1점) & 상대 윈드실드에 오일 얼룩 투척!`, false);
+
+            } else { // quantum_warp
+                // Quantum Warp: +1 point AND EMP stun enemy cart engine for 3.5 seconds
+                if (myTeam === 'blue') {
+                    nextData.blueScore = nextScore;
+                    nextData.blueStage = 0;
+                    nextData.blueMission = nextMission;
+                } else {
+                    nextData.redScore = nextScore;
+                    nextData.redStage = 0;
+                    nextData.redMission = nextMission;
+                }
+                nextData.empTarget = enemyTeam;
+                nextData.empId = boosterId;
+                showStepFeedback(`⚡ [양자 도약 EMP 발사!] 초광속 워프 (+1점) & 상대 카트 3.5초 엔진 긴급 정지!`, false);
+            }
 
             nextData.updatedAt = Date.now();
             await syncStateUpdate(nextData);
@@ -1952,19 +2018,20 @@
             const enemyTeam = myTeam === 'blue' ? 'red' : 'blue';
             const enemyScore = enemyTeam === 'blue' ? (lastKnownRoomData.blueScore || 0) : (lastKnownRoomData.redScore || 0);
             const enemyStage = enemyTeam === 'blue' ? (lastKnownRoomData.blueStage || 0) : (lastKnownRoomData.redStage || 0);
+            const isEnemyFlashing = Date.now() < enemyMiniFeedFlashTimer;
 
             ctx.save();
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctx.fillStyle = isEnemyFlashing ? 'rgba(239, 68, 68, 0.95)' : 'rgba(15, 23, 42, 0.85)';
             ctx.strokeStyle = enemyTeam === 'red' ? '#fb7185' : '#38bdf8';
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = isEnemyFlashing ? 3 : 1.5;
             ctx.beginPath();
             ctx.roundRect ? ctx.roundRect(x, y, 125, 65, 8) : ctx.rect(x, y, 125, 65);
             ctx.fill();
             ctx.stroke();
 
             ctx.font = 'bold 9px "JetBrains Mono", monospace';
-            ctx.fillStyle = enemyTeam === 'red' ? '#fda4af' : '#c7d2fe';
-            ctx.fillText(`📡 적 레일팀 피드`, x + 8, y + 15);
+            ctx.fillStyle = isEnemyFlashing ? '#ffffff' : (enemyTeam === 'red' ? '#fda4af' : '#c7d2fe');
+            ctx.fillText(isEnemyFlashing ? `🚨 적팀 음속 돌파!` : `📡 적 레일팀 피드`, x + 8, y + 15);
 
             ctx.font = 'bold 10px "Orbitron", sans-serif';
             ctx.fillStyle = '#facc15';
@@ -1972,9 +2039,9 @@
 
             const stageNames = ["1단계: 기울기", "2단계: 절편", "3단계: 게이트", "⚠️ 부스터!"];
             ctx.fillStyle = enemyStage === 3 ? '#ef4444' : '#e9d5ff';
-            ctx.fillText(stageNames[enemyStage] || "대기", x + 8, y + 48);
+            ctx.fillText(isEnemyFlashing ? `💥 서킷 클리어!` : (stageNames[enemyStage] || "대기"), x + 8, y + 48);
 
-            if (enemyStage === 3) {
+            if (enemyStage === 3 || isEnemyFlashing) {
                 ctx.fillStyle = (Date.now() % 400 < 200) ? '#ef4444' : '#7f1d1d';
                 ctx.beginPath();
                 ctx.arc(x + 105, y + 25, 5, 0, Math.PI * 2);
