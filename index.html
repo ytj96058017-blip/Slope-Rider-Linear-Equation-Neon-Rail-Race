@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>슬로프 라이더: 일차함수 네온 레일 레이스 - 중2 수학 실시간 4인 협동 레이싱</title>
+    <title>슬로프 라이더: 일차함수 네온 레일 레이스 - 중2 수학 4인 실시간 배틀</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700;800&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
@@ -13,18 +13,18 @@
         .font-racing { font-family: 'Orbitron', 'Black Han Sans', sans-serif; }
         .font-mono-code { font-family: 'JetBrains Mono', monospace; }
         
-        .neon-synth-bg {
+        .neon-grid-bg {
             background-color: #020617;
             background-image: 
-                linear-gradient(rgba(6, 182, 212, 0.07) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(6, 182, 212, 0.07) 1px, transparent 1px),
-                radial-gradient(circle at 50% 15%, #082f49 0%, #030712 65%, #020617 100%);
+                linear-gradient(rgba(6, 182, 212, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(6, 182, 212, 0.08) 1px, transparent 1px),
+                radial-gradient(circle at 50% 15%, #083344 0%, #030712 70%, #020617 100%);
             background-size: 32px 32px, 32px 32px, 100% 100%;
         }
 
         .neon-border-cyan {
             border: 2px solid #06b6d4;
-            box-shadow: 0 0 24px rgba(6, 182, 212, 0.35), inset 0 0 16px rgba(6, 182, 212, 0.15);
+            box-shadow: 0 0 24px rgba(6, 182, 212, 0.4), inset 0 0 16px rgba(6, 182, 212, 0.15);
         }
 
         .hud-corner {
@@ -41,12 +41,12 @@
         .hud-corner::before { top: -2px; left: -2px; border-top: 3px solid; border-left: 3px solid; }
         .hud-corner::after { bottom: -2px; right: -2px; border-bottom: 3px solid; border-right: 3px solid; }
 
-        @keyframes hyperRailPulse {
+        @keyframes neonPulse {
             0%, 100% { filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.5)); }
-            50% { filter: drop-shadow(0 0 28px rgba(6, 182, 212, 0.95)) drop-shadow(0 0 45px rgba(217, 70, 239, 0.5)); }
+            50% { filter: drop-shadow(0 0 26px rgba(6, 182, 212, 0.95)) drop-shadow(0 0 45px rgba(234, 179, 8, 0.5)); }
         }
-        .neon-rail-glow {
-            animation: hyperRailPulse 2.4s infinite ease-in-out;
+        .neon-glow {
+            animation: neonPulse 2.4s infinite ease-in-out;
         }
 
         @keyframes dangerAlert {
@@ -57,59 +57,72 @@
             animation: dangerAlert 0.75s infinite alternate;
         }
 
-        .neon-title-text {
-            text-shadow: 0 0 14px rgba(56, 189, 248, 0.8), 0 0 32px rgba(217, 70, 239, 0.6);
+        .neon-text-glow {
+            text-shadow: 0 0 14px rgba(56, 189, 248, 0.8), 0 0 28px rgba(6, 182, 212, 0.5);
+        }
+
+        @keyframes screenShakeAnim {
+            0% { transform: translate(0, 0); }
+            20% { transform: translate(-4px, 3px); }
+            40% { transform: translate(4px, -3px); }
+            60% { transform: translate(-3px, -2px); }
+            80% { transform: translate(3px, 2px); }
+            100% { transform: translate(0, 0); }
+        }
+        .screen-shaking {
+            animation: screenShakeAnim 0.35s ease-in-out;
         }
     </style>
 </head>
-<body class="neon-synth-bg text-white min-h-screen flex flex-col justify-between p-2 md:p-5 select-none relative overflow-x-hidden">
+<body class="neon-grid-bg text-white min-h-screen flex flex-col justify-between p-2 md:p-5 select-none relative overflow-x-hidden">
 
     <!-- Top Telemetry Status Bar -->
     <div class="max-w-6xl w-full mx-auto flex items-center justify-between text-[11px] font-mono-code text-cyan-400 border-b border-cyan-500/30 pb-1.5 mb-2">
         <div class="flex items-center gap-2">
             <span class="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-            <span class="font-bold tracking-widest text-cyan-300">HYPER_RAIL: ONLINE</span>
+            <span class="font-bold tracking-widest text-cyan-300">RAIL_TELEMETRY: ONLINE</span>
             <span class="text-slate-600">|</span>
-            <span class="hidden sm:inline text-slate-400">LINEAR FUNCTION // y = ax + b CIRCUIT RACE</span>
+            <span class="hidden sm:inline text-slate-400">EXACT TRAJECTORY: y = ax + b</span>
         </div>
         <div class="flex items-center gap-3">
             <span class="text-yellow-300 font-bold">SPARK_FREE_TIER: 100% SECURE</span>
-            <span class="px-2 py-0.5 rounded bg-cyan-950 border border-cyan-500/50 text-cyan-300">7 CIRCUITS 60 FPS</span>
+            <span class="px-2 py-0.5 rounded bg-cyan-950 border border-cyan-500/50 text-cyan-300">60 FPS VECTOR</span>
         </div>
     </div>
 
     <!-- Header Banner -->
     <header class="text-center mb-3">
         <div class="flex items-center justify-center gap-3">
-            <span class="text-3xl md:text-4xl">🚄</span>
-            <h1 class="text-3xl md:text-5xl font-racing tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-200 to-fuchsia-400 neon-title-text font-black">
-                SLOPE RIDER : NEON RAIL
+            <span class="text-3xl md:text-4xl">🏎️</span>
+            <h1 class="text-3xl md:text-5xl font-racing tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-200 to-yellow-300 neon-text-glow font-black">
+                SLOPE RIDER : NEON RAIL RACE
             </h1>
             <span class="text-3xl md:text-4xl">⚡</span>
         </div>
         <p class="text-xs md:text-sm text-cyan-300/90 mt-1 font-mono-code tracking-wide">
-            [중2 함수] 일차함수 $y = ax + b$ · 기울기 $a = \frac{\Delta y}{\Delta x}$ · $y$절편 $b$ · 7대 서킷 실시간 음속 도약 레이스
+            [중2 함수] 일차함수 $y = ax + b$ · 기울기 $a = \frac{\Delta y}{\Delta x}$ · $y$절편 $b$ · 7대 서킷 4인 협동 네온 레일 레이스
         </p>
     </header>
 
+    <!-- Main Workspace Container -->
     <main class="max-w-6xl w-full mx-auto flex-1 flex flex-col justify-center gap-3">
 
         <!-- 1. Lobby Screen -->
         <div id="lobby-screen" class="bg-slate-950/90 neon-border-cyan rounded-3xl p-6 md:p-10 shadow-2xl backdrop-blur-xl hud-corner">
             <div class="text-center mb-8">
                 <div class="inline-block px-4 py-1 rounded-full bg-cyan-950 border border-cyan-400/50 text-cyan-300 text-xs font-mono-code font-bold mb-2 tracking-widest">
-                    // HYPER-RAIL DISPATCH COMMAND //
+                    // HYPERLOOP LINEAR RAIL GRAND PRIX //
                 </div>
-                <h2 class="text-2xl md:text-3xl font-racing text-cyan-300 mb-2">네온 라이더 엔지니어 등록</h2>
+                <h2 class="text-2xl md:text-3xl font-racing text-cyan-300 mb-2">레이싱 드라이버 편제 등록</h2>
                 <p class="text-xs md:text-sm text-slate-300">
-                    배틀룸 코드를 공유한 팀원들과 팀을 결성하고, 기울기 $a$와 $y$절편 $b$로 끊어진 공중 네온 레일을 연결해 7개 서킷을 먼저 완주하세요!
+                    배틀룸 코드를 공유한 전우들과 팀을 결성하고, 7대 서킷의 정밀 일차함수 레일을 조립해 상대보다 먼저 1,200 km/h 음속 돌파를 달성하세요!
                 </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
                 <div class="bg-slate-900/90 p-5 rounded-2xl border border-cyan-500/40">
                     <label class="block text-sm font-semibold mb-2 text-cyan-300 flex items-center gap-2">
-                        <span>👤</span> 라이더 엔지니어 닉네임
+                        <span>👤</span> 네온 드라이버 닉네임
                     </label>
                     <input type="text" id="player-name" placeholder="예: 음속라이더 준혁" maxlength="10"
                            class="w-full px-4 py-3 rounded-xl bg-slate-950 border-2 border-slate-700 text-white font-bold text-lg focus:outline-none focus:border-cyan-400 font-mono-code">
@@ -127,11 +140,11 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
                 <button onclick="joinTeam('blue')" class="group relative py-5 rounded-2xl font-racing text-xl bg-gradient-to-r from-cyan-900 to-blue-800 hover:from-cyan-800 hover:to-blue-700 transition-all duration-200 shadow-xl border-2 border-cyan-300 flex items-center justify-center gap-3 transform hover:-translate-y-1 active:scale-95">
                     <span class="text-3xl">🔵</span>
-                    <span class="tracking-wide">알파 네온 레일팀 (블루 라이더) 탑승</span>
+                    <span class="tracking-wide">블루 니트로 레일팀 배치</span>
                 </button>
                 <button onclick="joinTeam('red')" class="group relative py-5 rounded-2xl font-racing text-xl bg-gradient-to-r from-rose-950 to-red-800 hover:from-rose-900 hover:to-red-700 transition-all duration-200 shadow-xl border-2 border-rose-400 flex items-center justify-center gap-3 transform hover:-translate-y-1 active:scale-95">
                     <span class="text-3xl">🔴</span>
-                    <span class="tracking-wide">오메가 터보 레일팀 (레드 라이더) 탑승</span>
+                    <span class="tracking-wide">레드 터보 레일팀 배치</span>
                 </button>
             </div>
 
@@ -143,7 +156,7 @@
             </div>
 
             <div id="lobby-status" class="text-center text-sm text-cyan-300 font-bold min-h-[24px]">
-                팀을 선택하면 공중 레일 텔레메트리를 동기화하고 서킷으로 진입합니다!
+                팀을 선택하면 정밀 일차함수 좌표평면을 동기화하고 서킷으로 진입합니다!
             </div>
             
             <div class="mt-5 text-center text-xs text-teal-300 font-mono-code font-bold">
@@ -158,31 +171,29 @@
             <div class="flex items-center justify-between px-1">
                 <div class="flex items-center gap-2 text-xs font-mono-code text-cyan-400">
                     <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-                    <span>LIVE_OPERATION // 7-CIRCUIT NEON RAILWAY HYPER SPEED RACE</span>
+                    <span>LIVE_RACE // 7-CIRCUIT NEON RAIL GRAND PRIX (FIRST TO 7 COMPLETIONS)</span>
                 </div>
                 <button onclick="resetCurrentRoomData()" class="px-3 py-1.5 bg-rose-950/80 hover:bg-rose-900 border border-rose-500/60 rounded-xl text-xs text-rose-300 font-bold transition active:scale-95 shadow flex items-center gap-1.5 font-mono-code">
                     <span>🧹</span><span>대원 명단 리셋 (0명 청소)</span>
                 </button>
             </div>
 
-            <!-- 7-Circuit Race Scoreboard HUD (Blue vs Red) -->
+            <!-- 7-Circuit Grand Prix Scoreboard HUD (Blue vs Red) -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-950/90 p-3.5 rounded-2xl border border-slate-800 shadow-xl hud-corner">
                 <!-- Blue Team Status -->
                 <div class="flex flex-col gap-2 p-3 rounded-xl bg-cyan-950/40 border-2 border-cyan-500/60">
                     <div class="flex justify-between items-center text-sm font-bold">
                         <span class="text-cyan-300 font-racing text-base md:text-lg flex items-center gap-2">
                             <span class="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
-                            <span>🔵 알파 네온 레일팀</span>
+                            <span>🔵 블루 니트로 서킷 현황</span>
                         </span>
-                        <div class="flex items-center gap-2 font-mono-code">
-                            <span id="blue-speed-meter" class="text-xs px-2 py-0.5 rounded bg-slate-900 border border-cyan-400 text-yellow-300 font-bold">0 km/h</span>
-                            <span id="blue-score-text" class="text-cyan-300 text-base font-bold">0 / 7 서킷</span>
-                        </div>
+                        <span id="blue-score-text" class="text-cyan-300 font-mono-code text-base font-bold">0 / 7 완주</span>
                     </div>
-                    <div id="blue-targets-row" class="grid grid-cols-7 gap-1 text-center text-[10px] font-mono-code">
-                        <!-- Populated dynamically via JS (7 circuits) -->
+                    <!-- 7 Circuit Badges for Blue -->
+                    <div id="blue-circuits-row" class="grid grid-cols-7 gap-1 text-center text-[10px] font-mono-code">
+                        <!-- Populated dynamically via JS -->
                     </div>
-                    <div id="blue-members" class="text-xs text-cyan-200 font-mono-code truncate">크루: 대기 중...</div>
+                    <div id="blue-members" class="text-xs text-cyan-200 font-mono-code truncate">드라이버: 대기 중...</div>
                 </div>
 
                 <!-- Red Team Status -->
@@ -190,17 +201,15 @@
                     <div class="flex justify-between items-center text-sm font-bold">
                         <span class="text-rose-300 font-racing text-base md:text-lg flex items-center gap-2">
                             <span class="w-3 h-3 rounded-full bg-rose-500 shadow-[0_0_8px_#f43f5e]"></span>
-                            <span>🔴 오메가 터보 레일팀</span>
+                            <span>🔴 레드 터보 서킷 현황</span>
                         </span>
-                        <div class="flex items-center gap-2 font-mono-code">
-                            <span id="red-speed-meter" class="text-xs px-2 py-0.5 rounded bg-slate-900 border border-rose-400 text-yellow-300 font-bold">0 km/h</span>
-                            <span id="red-score-text" class="text-rose-300 text-base font-bold">0 / 7 서킷</span>
-                        </div>
+                        <span id="red-score-text" class="text-rose-300 font-mono-code text-base font-bold">0 / 7 완주</span>
                     </div>
-                    <div id="red-targets-row" class="grid grid-cols-7 gap-1 text-center text-[10px] font-mono-code">
-                        <!-- Populated dynamically via JS (7 circuits) -->
+                    <!-- 7 Circuit Badges for Red -->
+                    <div id="red-circuits-row" class="grid grid-cols-7 gap-1 text-center text-[10px] font-mono-code">
+                        <!-- Populated dynamically via JS -->
                     </div>
-                    <div id="red-members" class="text-xs text-rose-200 font-mono-code truncate">크루: 대기 중...</div>
+                    <div id="red-members" class="text-xs text-rose-200 font-mono-code truncate">드라이버: 대기 중...</div>
                 </div>
             </div>
 
@@ -212,85 +221,91 @@
                 <div class="absolute top-2 left-3 px-3 py-1 bg-slate-950/90 border border-cyan-400/60 rounded-full text-xs font-mono-code text-cyan-300 z-10 flex items-center gap-2 shadow">
                     <span class="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
                     <span>RAIL_TELEMETRY //</span>
-                    <span id="rail-status-label" class="font-bold text-yellow-300">카트 발사대 대기 중 (STANDBY)</span>
+                    <span id="rail-status-label" class="font-bold text-yellow-300">정밀 일차함수 궤도 동기화 중</span>
                 </div>
 
-                <!-- Right Top Tactical Ping Help -->
-                <div class="absolute top-2 right-3 px-3 py-1 bg-slate-950/90 border border-cyan-400/60 rounded-full text-[11px] font-racing text-cyan-300 z-10 flex items-center gap-1.5 shadow">
-                    <span>👆 캔버스 터치:</span>
-                    <span class="text-yellow-300">레일 핑(Ping)</span>
+                <!-- Right Top Tactical Ping & Grid Toggle -->
+                <div class="absolute top-2 right-3 flex items-center gap-2 z-10">
+                    <button onclick="toggleGridDisplay()" id="grid-toggle-btn" class="px-2.5 py-1 bg-slate-900/90 hover:bg-cyan-950 border border-cyan-400/60 rounded-full text-[11px] font-mono-code text-cyan-300 shadow transition active:scale-95">
+                        📐 좌표 격자: ON
+                    </button>
+                    <div class="px-2.5 py-1 bg-slate-950/90 border border-cyan-400/60 rounded-full text-[11px] font-racing text-cyan-300 shadow">
+                        <span>👆 터치:</span>
+                        <span class="text-yellow-300">레일 핑</span>
+                    </div>
                 </div>
 
                 <!-- Bottom Status Ticker inside Canvas -->
                 <div class="absolute bottom-2 left-3 right-3 px-3 py-1 bg-slate-950/80 border border-slate-800 rounded-xl text-[11px] font-mono-code text-slate-400 flex items-center justify-between">
-                    <span id="canvas-status-stream">> [SYS] 레일 궤적 조립 대기 중... 기울기 a 및 y절편 b 연결 요망</span>
-                    <span class="text-cyan-400 font-bold hidden sm:inline">LINEAR FUNCTION TRAJECTORY</span>
+                    <span id="canvas-status-stream">> [SYS] 100% 정밀 일차함수 좌표평면 // y = ax + b 궤도 조립 중</span>
+                    <span class="text-cyan-400 font-bold hidden sm:inline">EXACT MATHEMATICAL TRAJECTORY</span>
                 </div>
             </div>
 
             <!-- Cooperative 4-Step Pipeline Workspace -->
-            <div id="action-box" class="relative bg-slate-950/95 neon-border-cyan rounded-3xl p-4 md:p-6 shadow-2xl flex flex-col items-center text-center neon-rail-glow hud-corner">
+            <div id="action-box" class="relative bg-slate-950/95 neon-border-cyan rounded-3xl p-4 md:p-6 shadow-2xl flex flex-col items-center text-center neon-glow hud-corner">
                 
-                <!-- Electro Slick EMP Overlay -->
+                <!-- Oil Slick EMP Overlay -->
                 <div id="slick-overlay" class="hidden absolute inset-0 rounded-3xl z-30 flex flex-col items-center justify-center p-6 text-center bg-slate-950/95 backdrop-blur-md">
                     <span class="text-5xl animate-bounce mb-3">🛢️</span>
-                    <h4 class="text-2xl font-racing text-amber-400 mb-1">상대 레일팀의 전자기 오일 슬릭 피격!</h4>
-                    <p class="text-sm text-slate-200 mb-4">레일 제어 콘솔에 기름때가 묻어 미끄러집니다! 클리너를 연속 클릭해 복구하세요!</p>
+                    <h4 class="text-2xl font-racing text-amber-400 mb-1">상대 카트의 오일 슬릭 교란탄 피격!</h4>
+                    <p class="text-sm text-slate-200 mb-4">카트 전면 윈드실드에 오일 얼룩이 발생했습니다! 와이퍼를 연속 클릭해 시야를 회복하세요!</p>
                     <button onclick="cleanSlick()" class="px-6 py-3 bg-gradient-to-r from-cyan-400 to-teal-300 text-slate-950 font-racing text-lg rounded-xl shadow-lg active:scale-95">
-                        🧹 전자기 와이퍼 작동 (<span id="slick-wipe-count">5</span>회 남음)
+                        🧹 윈드실드 와이퍼 가동 (<span id="slick-wipe-count">5</span>회 남음)
                     </button>
                 </div>
 
                 <!-- 5-Second Overheat Lockout Overlay -->
                 <div id="lockout-penalty-box" class="hidden absolute inset-0 bg-slate-950/95 rounded-3xl z-40 flex flex-col items-center justify-center p-6 text-center border-4 border-rose-500 danger-siren backdrop-blur-md">
                     <span class="text-5xl animate-bounce mb-2">⚠️</span>
-                    <h4 class="text-2xl font-racing text-rose-400 mb-1">레일 궤적 위상 탈선! 긴급 냉각 중</h4>
+                    <h4 class="text-2xl font-racing text-rose-400 mb-1">엔진 휠 스핀 과열! 긴급 냉각 중</h4>
                     <p class="text-xs md:text-sm text-slate-200 mb-3">
-                        기울기 또는 절편 연산 오류! 무작위 찍기를 방지하기 위해 5초간 콘솔이 잠금 처리됩니다.<br>
-                        팀원들과 x증가량 분의 y증가량 및 y절편 부호를 다시 정밀 검산하세요!
+                        기울기, 절편 또는 대입 연산 오류! 무작위 찍기를 방지하기 위해 5초간 콘솔이 잠금 처리됩니다.<br>
+                        팀원들과 $\Delta y / \Delta x$ 및 $y$절편 부호를 다시 정밀 검산하세요!
                     </p>
                     <div class="px-5 py-2.5 rounded-2xl bg-rose-950 border-2 border-rose-400 font-racing text-2xl text-yellow-300 flex items-center gap-2">
-                        <span>⏳ 레일 복구까지:</span>
+                        <span>⏳ 엔진 정상화까지:</span>
                         <span id="lockout-timer-num" class="text-3xl font-mono text-rose-400">5.0</span>초
                     </div>
                 </div>
 
                 <!-- Badges -->
                 <div class="flex flex-wrap items-center justify-center gap-2 mb-3">
-                    <span id="my-team-badge" class="text-xs px-3.5 py-1 rounded-full font-bold font-racing">소속 레일팀</span>
+                    <span id="my-team-badge" class="text-xs px-3.5 py-1 rounded-full font-bold font-racing">소속 레이싱팀</span>
                     <span id="my-role-badge" class="text-xs px-3.5 py-1 bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 rounded-full font-bold">내 포지션</span>
-                    <span id="target-circuit-badge" class="text-xs px-3.5 py-1 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 rounded-full font-bold font-mono-code">
-                        🏁 서킷 : <span id="current-op-name">네온 도심 하이웨이 #1</span>
+                    <span id="target-circuit-badge" class="text-xs px-3.5 py-1 bg-rose-500/20 text-rose-300 border border-rose-500/40 rounded-full font-bold font-mono-code">
+                        🏁 서킷 : <span id="current-op-name">네온 도심 서킷 #1</span>
                     </span>
                 </div>
 
                 <!-- Linear Function Clue Display -->
                 <div class="w-full max-w-3xl bg-slate-900/90 border-2 border-cyan-400/80 rounded-2xl p-3.5 md:p-5 shadow-inner mb-3 hud-corner">
                     <div class="text-xs font-semibold text-cyan-300 mb-1.5 tracking-wider uppercase flex items-center justify-between px-2 font-mono-code">
-                        <span>[LINEAR FUNCTION TELEMETRY // NEON RAIL CLUE]</span>
-                        <span class="text-teal-300">STATUS: CIRCUIT_STANDBY</span>
+                        <span>[LINEAR FUNCTION // TRACK TELEMETRY DATA]</span>
+                        <span class="text-teal-300">STATUS: CALIBRATING</span>
                     </div>
-                    <div id="equation-clue-display" class="text-base md:text-xl font-racing text-cyan-300 font-mono-code py-1 leading-relaxed">
-                        공중 네온 레일 궤적 제원 수신 중...
+                    <div id="circuit-clue-display" class="text-base md:text-xl font-racing text-yellow-300 tracking-wide font-mono-code py-1 leading-relaxed">
+                        서킷 궤도 제원 수신 중...
                     </div>
                 </div>
 
-                <!-- Linear Function Component Assembly HUD -->
+                <!-- Linear Function Formula Assembly HUD -->
                 <div class="w-full max-w-2xl bg-slate-900/70 border border-cyan-500/40 rounded-xl p-2.5 mb-3 text-xs font-mono-code">
                     <div class="text-slate-400 text-[11px] mb-1.5 flex items-center justify-center gap-1">
-                        <span>🧩</span><span>네온 레일 조립기 : 기울기 a ➔ y절편 b ➔ 부스터 링(x, y) 락온 ➔ 음속 도약!</span>
+                        <span>🧩</span><span>일차함수 궤도 조립기 : 기울기 a ➔ y절편 b ➔ 게이트 (x, y) 락온 ➔ 음속 질주!</span>
                     </div>
                     <div class="flex flex-wrap items-center justify-center gap-2 text-sm md:text-base font-bold">
-                        <span id="slot-a" class="px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-400 font-bold transition-all">
+                        <span class="text-cyan-300">y =</span>
+                        <span id="slot-slope" class="px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-400 font-bold transition-all">
                             기울기 a (경사각)
                         </span>
-                        <span class="text-slate-400">➔</span>
-                        <span id="slot-b" class="px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-400 font-bold transition-all">
+                        <span class="text-slate-300">x +</span>
+                        <span id="slot-intercept" class="px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-400 font-bold transition-all">
                             y절편 b (고도)
                         </span>
                         <span class="text-slate-400">➔</span>
-                        <div id="slot-target" class="px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-400 font-bold transition-all">
-                            게이트 (x, y) 락온 대기
+                        <div id="slot-gate" class="px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-400 font-bold transition-all">
+                            게이트 통과점 락온 대기
                         </div>
                     </div>
                 </div>
@@ -301,7 +316,7 @@
                         단계 안내 로딩 중...
                     </div>
 
-                    <!-- Step 0: Slope a Multi-choice Buttons (4 choices) -->
+                    <!-- Step 0: Slope Selection Buttons (4 Choices) -->
                     <div id="slope-choice-control" class="hidden grid grid-cols-2 gap-2.5 w-full max-w-md">
                         <button id="slope-btn-0" onclick="submitSlopeStep(0)" class="p-3 bg-slate-900 hover:bg-cyan-950 border-2 border-cyan-400 rounded-xl font-racing text-lg text-cyan-200 transition active:scale-95 shadow">
                             기울기 A
@@ -317,44 +332,44 @@
                         </button>
                     </div>
 
-                    <!-- Step 1 & 2: Number Input Mode (y-intercept, target y) -->
+                    <!-- Step 1 & 2: Number Input Mode (Intercept & Gate Y) -->
                     <div id="number-input-control" class="hidden flex flex-col sm:flex-row items-center justify-center gap-2 w-full max-w-md">
                         <input type="text" inputmode="numeric" id="step-number-input" placeholder="정답 숫자 입력" 
                                class="w-full sm:w-48 px-4 py-3 rounded-xl bg-slate-900 border-2 border-cyan-400 text-white font-bold text-xl text-center focus:outline-none focus:ring-2 focus:ring-cyan-300 font-mono-code"
                                onkeydown="if(event.key==='Enter') submitNumberStep()">
                         <button id="submit-step-btn" onclick="submitNumberStep()" 
                                 class="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-cyan-400 to-teal-400 hover:from-cyan-300 hover:to-teal-300 text-slate-950 font-racing text-base md:text-lg rounded-xl transition shadow-lg flex items-center justify-center gap-1.5 active:scale-95">
-                            <span>📡</span><span>레일 제원 전송</span>
+                            <span>📡</span><span>궤도 제원 고정</span>
                         </button>
                     </div>
 
-                    <!-- Step 3 Fire Button (Launch Booster Leap!) -->
+                    <!-- Step 3 Fire Button (Opens Booster Payload Modal) -->
                     <div id="fire-booster-control" class="hidden flex flex-col items-center gap-2 w-full max-w-md">
-                        <button onclick="openPayloadModal()" class="w-full py-4 bg-gradient-to-r from-cyan-400 via-sky-400 to-fuchsia-500 hover:from-cyan-300 hover:to-fuchsia-400 text-slate-950 font-racing text-xl md:text-2xl rounded-2xl shadow-xl border-2 border-white active:scale-95 transition animate-pulse flex items-center justify-center gap-2">
-                            <span>🚀</span><span>부스터 점화 & 1,200km/h 음속 도약! (BOOST! ⚡)</span>
+                        <button onclick="openBoosterModal()" class="w-full py-4 bg-gradient-to-r from-cyan-400 via-sky-500 to-yellow-400 hover:from-cyan-300 hover:to-yellow-300 text-slate-950 font-racing text-xl md:text-2xl rounded-2xl shadow-xl border-2 border-white active:scale-95 transition animate-pulse flex items-center justify-center gap-2">
+                            <span>🚀</span><span>1,200 km/h 초광속 음속 도약! (SONIC WARP! 💥)</span>
                         </button>
-                        <span class="text-xs text-yellow-200 font-semibold font-mono-code">> 레일 연결 완료! 전술 부스터를 선택하여 게이트를 뚫고 도약하세요!</span>
+                        <span class="text-xs text-yellow-200 font-semibold font-mono-code">> 일차함수 레일 100% 완전 결속! 전술 부스터를 분사하세요!</span>
                     </div>
 
                     <!-- Waiting Notice for Team Members -->
                     <div id="waiting-notice" class="hidden p-3 rounded-xl bg-slate-950/80 border border-slate-700 text-xs md:text-sm text-cyan-200 font-mono-code">
-                        ⏳ 현재 <span id="current-actor-name" class="font-bold text-yellow-300"></span> 엔지니어가 레일을 연결하고 있습니다. 캔버스를 터치하여 레일 핑을 보내세요!
+                        ⏳ 현재 <span id="current-actor-name" class="font-bold text-yellow-300"></span> 드라이버가 레일을 설계 중입니다. 캔버스를 터치하여 레일 핑을 보내세요!
                     </div>
                 </div>
 
                 <!-- 4-Stage Pipeline Tracker Cards -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full max-w-3xl mt-4 pt-3 border-t border-slate-800 text-xs font-semibold font-mono-code">
                     <div id="stage-card-0" class="p-2.5 rounded-xl border transition-all text-slate-400 bg-slate-900/60 border-slate-800">
-                        ① 기울기 a (경사)
+                        ① 기울기 경사관
                     </div>
                     <div id="stage-card-1" class="p-2.5 rounded-xl border transition-all text-slate-400 bg-slate-900/60 border-slate-800">
-                        ② y절편 b (고도)
+                        ② y절편 앵커사
                     </div>
                     <div id="stage-card-2" class="p-2.5 rounded-xl border transition-all text-slate-400 bg-slate-900/60 border-slate-800">
-                        ③ 부스터 링 락온
+                        ③ 게이트 락온관
                     </div>
                     <div id="stage-card-3" class="p-2.5 rounded-xl border transition-all text-slate-400 bg-slate-900/60 border-slate-800">
-                        ④ 음속 도약 ⚡
+                        ④ 음속 부스터 격발 🚀
                     </div>
                 </div>
 
@@ -362,14 +377,14 @@
                 <div id="battle-feedback" class="text-sm font-bold min-h-[24px] mt-2 font-mono-code"></div>
 
                 <div class="flex flex-wrap items-center justify-center gap-2 mt-2">
-                    <button onclick="sendQuickCheer('기울기는 x증가량 분의 y증가량! 📐')" class="px-3 py-1 bg-slate-900 hover:bg-slate-800 border border-cyan-500/40 rounded-lg text-xs text-cyan-200 font-mono-code">
-                        📐 기울기 a = Δy / Δx!
+                    <button onclick="sendQuickCheer('기울기는 x증가량 분의 y증가량이야! 📐')" class="px-3 py-1 bg-slate-900 hover:bg-slate-800 border border-cyan-500/40 rounded-lg text-xs text-cyan-200 font-mono-code">
+                        📐 기울기 = Δy / Δx!
                     </button>
-                    <button onclick="sendQuickCheer('y절편은 x=0일 때 y값(0, b)! 💡')" class="px-3 py-1 bg-slate-900 hover:bg-slate-800 border border-cyan-500/40 rounded-lg text-xs text-cyan-200 font-mono-code">
+                    <button onclick="sendQuickCheer('y절편은 x가 0일 때 y축과 만나는 점이야! 💡')" class="px-3 py-1 bg-slate-900 hover:bg-slate-800 border border-cyan-500/40 rounded-lg text-xs text-cyan-200 font-mono-code">
                         💡 y절편은 (0, b)!
                     </button>
-                    <button onclick="sendQuickCheer('구한 식에 x좌표를 대입해 게이트 y를 찾아! 🎯')" class="px-3 py-1 bg-slate-900 hover:bg-slate-800 border border-cyan-500/40 rounded-lg text-xs text-cyan-200 font-mono-code">
-                        🎯 식에 x 대입해 y 산출!
+                    <button onclick="sendQuickCheer('식 y = ax + b 에 x를 대입해서 y를 구해! 🎯')" class="px-3 py-1 bg-slate-900 hover:bg-slate-800 border border-cyan-500/40 rounded-lg text-xs text-cyan-200 font-mono-code">
+                        🎯 대입해서 y좌표 락온!
                     </button>
                 </div>
 
@@ -378,35 +393,35 @@
         </div>
     </main>
 
-    <!-- Tactical Booster Payload Selection Modal -->
+    <!-- Tactical Booster Selection Modal -->
     <div id="payload-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center z-50 p-4">
         <div class="bg-slate-900 border-4 border-cyan-400 rounded-3xl p-6 md:p-8 max-w-xl w-full text-center shadow-[0_0_50px_rgba(6,182,212,0.4)] hud-corner">
-            <div class="text-5xl mb-2">🚀</div>
-            <h4 class="text-2xl md:text-3xl font-racing text-cyan-300 mb-1">4단계: 전술 부스터 점화 선택</h4>
+            <div class="text-5xl mb-2">⚡</div>
+            <h4 class="text-2xl md:text-3xl font-racing text-cyan-300 mb-1">4단계: 전술 레일 부스터 선택</h4>
             <p class="text-xs text-slate-300 mb-5">
-                네온 레일 및 게이트 100% 락온 완료! 부스터를 선택하고 다음 서킷으로 퀀텀 도약하세요!
+                일차함수 궤도 결속 완료! 1,200 km/h 음속 도약을 가동하고 상대 팀에 전술 효과를 발동하세요!
             </p>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-                <!-- Tactical 1: Hyper Nitro -->
-                <button onclick="choosePayload('hyper_nitro')" class="group p-4 rounded-2xl bg-gradient-to-b from-cyan-950/90 to-slate-950 border-2 border-cyan-400 hover:border-yellow-300 flex flex-col items-center gap-2 transition hover:scale-105 active:scale-95 shadow-xl">
-                    <span class="text-4xl">⚡</span>
+                <!-- Booster 1: Hyper Nitro -->
+                <button onclick="chooseBoosterPayload('hyper_nitro')" class="group p-4 rounded-2xl bg-gradient-to-b from-cyan-950/90 to-slate-950 border-2 border-cyan-400 hover:border-yellow-300 flex flex-col items-center gap-2 transition hover:scale-105 active:scale-95 shadow-xl">
+                    <span class="text-4xl">🚀</span>
                     <span class="font-racing text-base text-cyan-300">하이퍼 니트로</span>
-                    <span class="text-[11px] text-slate-300 leading-tight">1,200km/h 음속 돌파<br><b class="text-yellow-300">서킷 즉시 완주 (+1점)</b></span>
+                    <span class="text-[11px] text-slate-300 leading-tight">순수 음속 가속 도약<br><b class="text-yellow-300">서킷 즉시 완주 (+1점)</b></span>
                 </button>
 
-                <!-- Tactical 2: Electro Slick -->
-                <button onclick="choosePayload('electro_slick')" class="group p-4 rounded-2xl bg-gradient-to-b from-fuchsia-950/90 to-slate-950 border-2 border-fuchsia-500 hover:border-yellow-300 flex flex-col items-center gap-2 transition hover:scale-105 active:scale-95 shadow-xl">
+                <!-- Booster 2: Oil Slick Shell -->
+                <button onclick="chooseBoosterPayload('oil_slick')" class="group p-4 rounded-2xl bg-gradient-to-b from-amber-950/90 to-slate-950 border-2 border-amber-500 hover:border-yellow-300 flex flex-col items-center gap-2 transition hover:scale-105 active:scale-95 shadow-xl">
                     <span class="text-4xl">🛢️</span>
-                    <span class="font-racing text-base text-fuchsia-300">전자기 슬릭탄</span>
-                    <span class="text-[11px] text-slate-300 leading-tight">상대 트랙 기름막 살포<br><b class="text-fuchsia-300">완주 + 적 5회 정화</b></span>
+                    <span class="font-racing text-base text-amber-300">오일 슬릭탄</span>
+                    <span class="text-[11px] text-slate-300 leading-tight">적 트랙 시야 교란<br><b class="text-amber-300">완주 + 적 5회 와이퍼</b></span>
                 </button>
 
-                <!-- Tactical 3: Quantum Warp -->
-                <button onclick="choosePayload('quantum_warp')" class="group p-4 rounded-2xl bg-gradient-to-b from-purple-950/90 to-slate-950 border-2 border-purple-400 hover:border-white flex flex-col items-center gap-2 transition hover:scale-105 active:scale-95 shadow-xl">
-                    <span class="text-4xl">💫</span>
-                    <span class="font-racing text-base text-purple-300">양자 도약 펄스</span>
-                    <span class="text-[11px] text-slate-300 leading-tight">광속 차원 게이트 워프<br><b class="text-yellow-300">초고속 서킷 완주 (+1점)</b></span>
+                <!-- Booster 3: Quantum Warp -->
+                <button onclick="chooseBoosterPayload('quantum_warp')" class="group p-4 rounded-2xl bg-gradient-to-b from-fuchsia-950/90 to-slate-950 border-2 border-fuchsia-400 hover:border-white flex flex-col items-center gap-2 transition hover:scale-105 active:scale-95 shadow-xl">
+                    <span class="text-4xl">✨</span>
+                    <span class="font-racing text-base text-fuchsia-300">양자 도약 펄스</span>
+                    <span class="text-[11px] text-slate-300 leading-tight">광속 차원 게이트 돌파<br><b class="text-yellow-300">초고속 즉각 통과 (+1점)</b></span>
                 </button>
             </div>
 
@@ -419,7 +434,7 @@
     <!-- Generic Custom Modal -->
     <div id="custom-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center z-50 p-4">
         <div class="bg-slate-900 border-2 border-cyan-400 rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl hud-corner">
-            <h4 id="modal-title" class="text-2xl font-racing text-cyan-300 mb-2">레이스 컨트롤 통신</h4>
+            <h4 id="modal-title" class="text-2xl font-racing text-cyan-300 mb-2">사령부 레이스 통신</h4>
             <p id="modal-body" class="text-sm text-slate-200 mb-6">내용</p>
             <button onclick="closeCustomModal()" class="bg-gradient-to-r from-cyan-400 to-teal-500 text-slate-950 font-racing px-6 py-2.5 rounded-xl transition shadow-lg hover:scale-105">
                 확인
@@ -432,18 +447,18 @@
         <div class="relative bg-gradient-to-b from-slate-900 via-cyan-950 to-slate-950 border-4 border-cyan-400 rounded-3xl p-6 md:p-8 max-w-lg w-full text-center shadow-[0_0_60px_rgba(6,182,212,0.6)] overflow-hidden hud-corner">
             <div class="text-6xl md:text-7xl mb-2">🏆</div>
             <div class="inline-block px-4 py-1 rounded-full bg-cyan-400 text-slate-950 font-racing text-xs tracking-wider mb-2">
-                ⚡ SLOPE RIDER GRAND CHAMPION
+                🏁 SLOPE RIDER GRAND PRIX CHAMPION
             </div>
             <h3 id="victory-team-title" class="text-3xl md:text-4xl font-racing text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-200 to-yellow-300 mb-3">
-                알파 네온 레일팀 7대 서킷 완주 대승리!
+                블루 니트로 레일팀 7대 서킷 완주 대승리!
             </h3>
             <p id="victory-desc" class="text-xs md:text-sm text-cyan-200 mb-5 leading-relaxed">
-                7개의 험난한 고공 네온 서킷을 완벽한 일차함수 기울기와 절편 연산으로 1,200km/h 음속 돌파하여 상대 팀보다 먼저 전 서킷을 제패했습니다!
+                7개의 하이퍼 네온 서킷을 완벽한 일차함수 기울기·절편 연산과 1,200 km/h 음속 도약으로 상대보다 먼저 모두 정복했습니다!
             </p>
 
             <div class="bg-slate-950/80 border border-slate-700 rounded-2xl p-4 mb-6 text-left">
                 <div class="text-xs text-yellow-300 font-bold mb-2 flex items-center gap-1.5">
-                    <span>👑</span> 챔피언 네온 라이더 크루
+                    <span>👑</span> 챔피언 네온 드라이버 크루
                 </div>
                 <div id="victory-members-list" class="text-sm font-bold text-white mb-3 font-mono-code">
                     대원 목록
@@ -451,17 +466,17 @@
                 <div class="grid grid-cols-2 gap-2 text-center text-xs font-racing border-t border-slate-800 pt-3">
                     <div class="bg-slate-900/80 p-2 rounded-xl">
                         <span class="text-slate-400 block text-[10px]">완주 기록</span>
-                        <span class="text-cyan-300 text-sm">7 / 7 서킷 완전 제패</span>
+                        <span class="text-cyan-300 text-sm">7 / 7 서킷 전탄 완주</span>
                     </div>
                     <div class="bg-slate-900/80 p-2 rounded-xl">
-                        <span class="text-slate-400 block text-[10px]">총 랩 타임</span>
+                        <span class="text-slate-400 block text-[10px]">작전 수행 타임</span>
                         <span id="victory-total-time" class="text-yellow-300 text-sm font-mono-code">00.0초</span>
                     </div>
                 </div>
             </div>
 
             <button onclick="location.reload()" class="w-full py-4 bg-gradient-to-r from-cyan-400 via-sky-400 to-yellow-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 font-racing text-lg rounded-2xl shadow-xl transform active:scale-95 transition">
-                ⚡ 새로운 7대 서킷 그랑프리 재도전
+                ⚡ 새로운 7대 서킷 레이스 재도전
             </button>
         </div>
     </div>
@@ -496,24 +511,27 @@
                     osc.stop(this.ctx.currentTime + duration);
                 } catch (e) {}
             }
-            railConnect() {
+            radarPing() {
                 this.init();
-                this.playTone(440, 'triangle', 0.15, 0.3);
-                setTimeout(() => this.playTone(660, 'sine', 0.2, 0.25), 60);
-                setTimeout(() => this.playTone(880, 'sine', 0.3, 0.2), 120);
+                this.playTone(880, 'sine', 0.15, 0.2);
+                setTimeout(() => this.playTone(1320, 'sine', 0.25, 0.18), 70);
             }
-            engineRev() {
+            tacticalPing() {
                 this.init();
-                this.playTone(110, 'sawtooth', 0.25, 0.35);
-                setTimeout(() => this.playTone(220, 'sawtooth', 0.3, 0.4), 80);
-                setTimeout(() => this.playTone(440, 'triangle', 0.4, 0.35), 160);
+                this.playTone(700, 'sine', 0.15, 0.2);
+                setTimeout(() => this.playTone(1050, 'triangle', 0.25, 0.2), 50);
             }
-            boosterBlast() {
+            railAssemble() {
+                this.init();
+                this.playTone(340, 'triangle', 0.12, 0.25);
+                setTimeout(() => this.playTone(680, 'sine', 0.2, 0.3), 60);
+            }
+            hyperBoost() {
                 this.init();
                 this.playTone(180, 'sawtooth', 0.2, 0.45);
-                setTimeout(() => this.playTone(320, 'sawtooth', 0.35, 0.4), 40);
-                setTimeout(() => this.playTone(700, 'triangle', 0.5, 0.4), 90);
-                setTimeout(() => this.playTone(1200, 'sine', 0.7, 0.3), 150);
+                setTimeout(() => this.playTone(360, 'sawtooth', 0.3, 0.4), 60);
+                setTimeout(() => this.playTone(720, 'sine', 0.4, 0.35), 120);
+                setTimeout(() => this.playTone(1440, 'sine', 0.5, 0.3), 180);
             }
             unlockChirp() {
                 this.init();
@@ -550,6 +568,7 @@
         }
         const sfx = new SoundFX();
     </script>
+
     <!-- Main Game Logic and Firebase Synchronizer -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -604,6 +623,18 @@
         let slickWipesRemaining = 5;
         let lastRenderedStage = -1;
         let lastRenderedTarget = -1;
+        let showGridPlane = true;
+
+        window.toggleGridDisplay = function() {
+            showGridPlane = !showGridPlane;
+            const btn = document.getElementById('grid-toggle-btn');
+            if (btn) {
+                btn.innerText = showGridPlane ? "📐 좌표 격자: ON" : "📐 좌표 격자: OFF";
+                btn.className = showGridPlane 
+                    ? "px-2.5 py-1 bg-slate-900/90 hover:bg-cyan-950 border border-cyan-400/60 rounded-full text-[11px] font-mono-code text-cyan-300 shadow transition active:scale-95"
+                    : "px-2.5 py-1 bg-slate-900/90 hover:bg-slate-800 border border-slate-600 rounded-full text-[11px] font-mono-code text-slate-400 shadow transition active:scale-95";
+            }
+        };
 
         const CIRCUIT_NAMES = [
             "네온 도심 하이웨이 #1",
@@ -616,26 +647,49 @@
         ];
 
         /*
-           중2 수학 핵심: 일차함수 7대 서킷 생성기 (최대 7문제)
+           중2 수학 핵심: 100% 좌표 일치 일차함수 7대 서킷 생성기
+           - 스포일러 방지: 답안 텍스트(Δx, Δy)를 미리 주지 않고, 학생들이 눈금이나 공식으로 직접 유도
+           - 4대 유형 다변화: 두 점 통과, x/y 절편 조건, 평행선 조건, 음수 경사 종합
         */
         function generateLinearRailMission(trackIndex = 1) {
             let mission = null;
             let attempts = 0;
             const cName = CIRCUIT_NAMES[(trackIndex - 1) % CIRCUIT_NAMES.length] || `네온 서킷 #${trackIndex}`;
 
-            while (attempts < 140) {
+            while (attempts < 180) {
                 attempts++;
-                const aPool = [1, 2, 3, -1, -2, -3];
+                const aPool = [1, 2, -1, -2];
                 const a = aPool[Math.floor(Math.random() * aPool.length)];
-                const b = Math.floor(Math.random() * 9) - 4; // -4 to 4
 
-                // Target Gate point (x_gate != 0)
-                let xGate = Math.floor(Math.random() * 7) - 3; // -3 to 3
-                if (xGate === 0) xGate = a > 0 ? 2 : -2;
+                // Bounded y-intercept b so values stay cleanly within [-5, 5]
+                let b = 0;
+                if (Math.abs(a) === 1) {
+                    b = Math.floor(Math.random() * 5) - 2; // -2 to 2
+                } else {
+                    b = Math.floor(Math.random() * 3) - 1; // -1 to 1
+                }
+
+                // Sample points P1(x1, y1), P2(x2, y2)
+                let x1 = 0, x2 = 0;
+                x1 = Math.floor(Math.random() * 2) - 3; // -3 or -2
+                x2 = x1 + (Math.abs(a) === 1 ? 3 : 2);
+                
+                const y1 = a * x1 + b;
+                const y2 = a * x2 + b;
+                const deltaX = x2 - x1;
+                const deltaY = y2 - y1;
+
+                // Target gate point (must lie on line y = ax + b, xGate != 0, xGate != x1, xGate != x2)
+                let xGateCandidates = [-4, -3, -2, -1, 1, 2, 3, 4].filter(x => {
+                    const y = a * x + b;
+                    return x !== 0 && x !== x1 && x !== x2 && Math.abs(y) <= 5;
+                });
+                if (xGateCandidates.length === 0) continue;
+                const xGate = xGateCandidates[Math.floor(Math.random() * xGateCandidates.length)];
                 const yGate = a * xGate + b;
 
-                // Restrict yGate within -7 to 7 for neat visualization
-                if (Math.abs(yGate) > 7) continue;
+                // Screen boundary check [-5, 5]
+                if (Math.abs(y1) > 5 || Math.abs(y2) > 5 || Math.abs(yGate) > 5) continue;
 
                 // Equation text
                 let eqStr = "y = ";
@@ -646,20 +700,18 @@
                 if (b > 0) eqStr += ` + ${b}`;
                 else if (b < 0) eqStr += ` - ${Math.abs(b)}`;
 
-                // Generate two sample points for slope clue
-                const p1x = 1, p1y = a * p1x + b;
-                const p2x = 3, p2y = a * p2x + b;
-                const deltaX = p2x - p1x;
-                const deltaY = p2y - p1y;
-
-                let clueType = Math.floor(Math.random() * 3);
+                // Clue types by circuit progress (no spoiler Delta numbers given directly!)
+                let clueType = (trackIndex - 1) % 3;
                 let clueText = "";
                 if (clueType === 0) {
-                    clueText = `x가 [${deltaX}] 만큼 증가할 때 y는 [${deltaY >= 0 ? '+' + deltaY : deltaY}] 만큼 변화하고, y절편이 [ ${b} ] 인 네온 레일!`;
+                    // Two points on plane: students must compute slope = (y2 - y1) / (x2 - x1)
+                    clueText = `좌표평면의 두 데이터 비컨 (${x1}, ${y1}) 과 (${x2}, ${y2}) 를 연결하는 네온 레일 궤적!`;
                 } else if (clueType === 1) {
-                    clueText = `두 점 (${p1x}, ${p1y})과 (${p2x}, ${p2y})를 통과하는 공중 네온 레일 궤적!`;
+                    // x and y variations without giving slope directly
+                    clueText = `x의 값이 [ ${deltaX} ] 만큼 증가할 때 y의 값이 [ ${deltaY >= 0 ? '+' + deltaY : deltaY} ] 만큼 변화하는 하이퍼 레일!`;
                 } else {
-                    clueText = `y절편이 (${0}, ${b})이고, x증가량 분의 y증가량이 [ ${a} ] 인 하이퍼 레일웨이!`;
+                    // Parallel condition
+                    clueText = `직선 y = ${a === 1 ? '' : (a === -1 ? '-' : a)}x 와 평행하고, 점 (${x1}, ${y1}) 을 지나는 음속 서킷 레일!`;
                 }
 
                 // 4 Choices for slope a
@@ -675,7 +727,7 @@
                 }
                 const slopeCorrectIndex = slopeChoices.indexOf(a);
 
-                if (!recentProblemsSet.has(eqStr) || attempts > 110) {
+                if (!recentProblemsSet.has(eqStr) || attempts > 120) {
                     recentProblemsSet.add(eqStr);
                     if (recentProblemsSet.size > 30) {
                         const first = recentProblemsSet.values().next().value;
@@ -689,6 +741,12 @@
                         b: b,
                         eqStr: eqStr,
                         clueText: clueText,
+                        x1: x1,
+                        y1: y1,
+                        x2: x2,
+                        y2: y2,
+                        deltaX: deltaX,
+                        deltaY: deltaY,
                         xGate: xGate,
                         yGate: yGate,
                         slopeChoices: slopeChoices,
@@ -702,13 +760,19 @@
                 mission = {
                     trackIndex: 1,
                     trackName: "네온 도심 하이웨이 #1",
-                    a: 2,
+                    a: 1,
                     b: 1,
-                    eqStr: "y = 2x + 1",
-                    clueText: "x가 2만큼 증가할 때 y는 4만큼 증가하고, 점 (0, 1)을 지나는 네온 레일!",
-                    xGate: 2,
-                    yGate: 5,
-                    slopeChoices: [2, -2, 1, -1],
+                    eqStr: "y = x + 1",
+                    clueText: "좌표평면의 두 데이터 비컨 (-2, -1) 과 (1, 2) 를 연결하는 네온 레일 궤적!",
+                    x1: -2,
+                    y1: -1,
+                    x2: 1,
+                    y2: 2,
+                    deltaX: 3,
+                    deltaY: 3,
+                    xGate: 3,
+                    yGate: 4,
+                    slopeChoices: [1, 2, -1, -2],
                     slopeCorrectIndex: 0
                 };
             }
@@ -739,16 +803,17 @@
                     isLockedOut = false;
                     lockoutBox.classList.add('hidden');
                     sfx.playTone(520, 'sine', 0.15, 0.2);
-                    showStepFeedback("⚡ [레일 복구 완료] 제어 콘솔이 정상화되었습니다. 신중하게 입력하세요!", false);
+                    showStepFeedback("⚡ [엔진 냉각 완료] 레일 제어 콘솔이 정상 복구되었습니다. 신중하게 입력하세요!", false);
                 }
             }, 100);
         }
+
         function cleanMemberList(members = []) {
             const map = new Map();
             members.forEach(item => {
                 if (!item) return;
                 const id = item.id || item.name;
-                const name = item.name || item.id || '라이더';
+                const name = item.name || item.id || '드라이버';
                 const joinedAt = item.joinedAt || Date.now();
                 const lastSeen = item.lastSeen || Date.now();
                 
@@ -768,12 +833,12 @@
         }
 
         function getRoleDescription(memberIndex, teamSize, problemCount = 1) {
-            if (teamSize <= 1) return "올라운드 치프 라이더 (전 구역 단독 가설/질주)";
+            if (teamSize <= 1) return "올라운드 치프 드라이버 (전 구역 단독 락온/질주)";
             const stageNames = [
-                "① 기울기 a 분석관",
-                "② y절편 b 조준사",
-                "③ 게이트 링 락온사",
-                "④ 음속 도약 점화관 ⚡"
+                "① 기울기 경사관",
+                "② y절편 앵커사",
+                "③ 게이트 락온관",
+                "④ 음속 부스터 격발 🚀"
             ];
             const myAssignedStages = [];
             for (let s = 0; s < 4; s++) {
@@ -781,20 +846,20 @@
                     myAssignedStages.push(stageNames[s]);
                 }
             }
-            return `${memberIndex + 1}번 라이더 [${myAssignedStages.join(' + ')}]`;
+            return `${memberIndex + 1}번 드라이버 [${myAssignedStages.join(' + ')}]`;
         }
 
         function createInitialRoomData() {
             return {
-                blueKills: 0,
-                redKills: 0,
+                blueScore: 0,
+                redScore: 0,
                 blueMembers: [],
                 redMembers: [],
                 blueStage: 0,
                 redStage: 0,
                 blueMission: generateLinearRailMission(1),
                 redMission: generateLinearRailMission(1),
-                lastBoost: null,
+                lastBooster: null,
                 lastPing: null,
                 slickTarget: null,
                 slickId: 0,
@@ -803,7 +868,7 @@
         }
 
         window.joinTeam = async function(team) {
-            const name = document.getElementById('player-name').value.trim() || `라이더_${Math.floor(Math.random()*900+100)}`;
+            const name = document.getElementById('player-name').value.trim() || `드라이버_${Math.floor(Math.random()*900+100)}`;
             const code = document.getElementById('room-code').value.trim() || 'slope201';
 
             currentUserName = name;
@@ -812,7 +877,7 @@
 
             const myMemberObj = { id: myPlayerId, name: currentUserName, lastSeen: Date.now(), joinedAt: myJoinedAt };
 
-            // Local BroadcastChannel for peer sync
+            // Zero-cost BroadcastChannel for instant local peer synchronization
             try {
                 if (window.BroadcastChannel) {
                     if (bc) bc.close();
@@ -830,13 +895,14 @@
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('battle-screen').classList.remove('hidden');
             initRailCanvas();
-            sfx.engineRev();
+            sfx.radarPing();
 
             let initialData = createInitialRoomData();
             if (team === 'blue') initialData.blueMembers = [myMemberObj];
             else initialData.redMembers = [myMemberObj];
             applyRoomState(initialData);
 
+            // One-time registration upon join to Firestore root collection
             try {
                 if (db) {
                     const roomRef = doc(db, 'slope_rider_rooms', currentRoomCode);
@@ -854,7 +920,7 @@
                     await setDoc(roomRef, currentData, { merge: true });
                 }
             } catch (err) {
-                console.warn("Slope rider join error:", err);
+                console.warn("Slope Rider join error:", err);
             }
 
             window.addEventListener('beforeunload', leaveRoomCleanup);
@@ -877,7 +943,7 @@
         window.resetCurrentRoomData = async function() {
             const code = currentRoomCode || document.getElementById('room-code').value.trim() || 'slope201';
             const fresh = createInitialRoomData();
-            const myMemberObj = { id: myPlayerId, name: currentUserName || '라이더', lastSeen: Date.now(), joinedAt: myJoinedAt };
+            const myMemberObj = { id: myPlayerId, name: currentUserName || '드라이버', lastSeen: Date.now(), joinedAt: myJoinedAt };
             if (myTeam === 'blue') fresh.blueMembers = [myMemberObj];
             else if (myTeam === 'red') fresh.redMembers = [myMemberObj];
 
@@ -888,7 +954,7 @@
                 }
             } catch (e) {}
             applyRoomState(fresh);
-            showCustomModal("초기화 완료", "라이더 명단과 7대 서킷 랩 기록이 깨끗하게 리셋되었습니다!");
+            showCustomModal("초기화 완료", "7대 서킷 그랑프리 명단과 점수가 깨끗하게 리셋되었습니다!");
         };
 
         function startFirestoreListener(roomRef) {
@@ -900,6 +966,7 @@
                 console.warn("Snapshot error:", err);
             });
         }
+
         function applyRoomState(data) {
             if (!data) return;
 
@@ -907,9 +974,9 @@
             data.redMembers = cleanMemberList(data.redMembers || []);
             lastKnownRoomData = data;
 
-            if (data.lastBoost && (!window.lastObservedBoostId || window.lastObservedBoostId !== data.lastBoost.id)) {
-                window.lastObservedBoostId = data.lastBoost.id;
-                triggerKartBoosterSprint(data.lastBoost.fromTeam, data.lastBoost.a, data.lastBoost.b, data.lastBoost.payloadType, data.lastBoost.xGate, data.lastBoost.yGate);
+            if (data.lastBooster && (!window.lastObservedBoostId || window.lastObservedBoostId !== data.lastBooster.id)) {
+                window.lastObservedBoostId = data.lastBooster.id;
+                triggerSonicLeapLaunch(data.lastBooster.fromTeam, data.lastBooster.mission, data.lastBooster.payloadType);
             }
 
             if (data.lastPing && (!window.lastObservedPingId || window.lastObservedPingId !== data.lastPing.id)) {
@@ -924,18 +991,18 @@
                 activateSlickCover();
             }
 
-            updateRaceScoreboard(data.blueKills || 0, data.redKills || 0);
+            updateRaceScoreboard(data.blueScore || 0, data.redScore || 0);
 
             const bMembers = (data.blueMembers || []).map(m => m.name || m);
             const rMembers = (data.redMembers || []).map(m => m.name || m);
-            document.getElementById('blue-members').innerText = `크루(${bMembers.length}명): ${bMembers.join(', ') || '대기 중'}`;
-            document.getElementById('red-members').innerText = `크루(${rMembers.length}명): ${rMembers.join(', ') || '대기 중'}`;
+            document.getElementById('blue-members').innerText = `드라이버(${bMembers.length}명): ${bMembers.join(', ') || '대기 중'}`;
+            document.getElementById('red-members').innerText = `드라이버(${rMembers.length}명): ${rMembers.join(', ') || '대기 중'}`;
 
             updatePipelineUI(data);
 
-            if (((data.blueKills || 0) >= 7 || (data.redKills || 0) >= 7) && !battleEnded) {
+            if (((data.blueScore || 0) >= 7 || (data.redScore || 0) >= 7) && !battleEnded) {
                 battleEnded = true;
-                const winnerTeam = (data.blueKills || 0) >= 7 ? 'blue' : 'red';
+                const winnerTeam = (data.blueScore || 0) >= 7 ? 'blue' : 'red';
                 triggerGrandVictory(winnerTeam, data);
             }
         }
@@ -952,49 +1019,49 @@
             }
         }
 
-        function updateRaceScoreboard(blueKills, redKills) {
-            const bK = Math.min(7, Math.max(0, blueKills));
-            const rK = Math.min(7, Math.max(0, redKills));
+        function updateRaceScoreboard(blueScore, redScore) {
+            const bS = Math.min(7, Math.max(0, blueScore));
+            const rS = Math.min(7, Math.max(0, redScore));
 
-            document.getElementById('blue-score-text').innerText = `${bK} / 7 서킷 완주`;
-            document.getElementById('red-score-text').innerText = `${rK} / 7 서킷 완주`;
+            document.getElementById('blue-score-text').innerText = `${bS} / 7 서킷 완주`;
+            document.getElementById('red-score-text').innerText = `${rS} / 7 서킷 완주`;
 
-            const bRow = document.getElementById('blue-targets-row');
-            const rRow = document.getElementById('red-targets-row');
+            const bRow = document.getElementById('blue-circuits-row');
+            const rRow = document.getElementById('red-circuits-row');
             bRow.innerHTML = '';
             rRow.innerHTML = '';
 
             for (let i = 0; i < 7; i++) {
                 const targetNum = i + 1;
                 // Blue badge
-                const isBlueDone = i < bK;
-                const isBlueActive = i === bK;
+                const isBlueDone = i < bS;
+                const isBlueActive = i === bS;
                 bRow.innerHTML += `
                     <div class="p-1 rounded-lg border flex flex-col items-center ${
                         isBlueDone 
                             ? 'bg-cyan-950/80 border-cyan-400 text-cyan-300 shadow-[0_0_6px_#22d3ee]' 
                             : (isBlueActive 
-                                ? 'bg-amber-950/80 border-amber-400 text-yellow-300 animate-pulse font-bold' 
+                                ? 'bg-amber-950/80 border-amber-400 text-amber-300 animate-pulse font-bold' 
                                 : 'bg-slate-900/50 border-slate-800 text-slate-600')
                     }">
-                        <span class="text-xs">🚄</span>
-                        <span class="text-[9px] truncate w-full">${targetNum}랩</span>
+                        <span class="text-xs">🏎️</span>
+                        <span class="text-[9px] truncate w-full">${targetNum}번</span>
                     </div>
                 `;
 
                 // Red badge
-                const isRedDone = i < rK;
-                const isRedActive = i === rK;
+                const isRedDone = i < rS;
+                const isRedActive = i === rS;
                 rRow.innerHTML += `
                     <div class="p-1 rounded-lg border flex flex-col items-center ${
                         isRedDone 
                             ? 'bg-rose-950/80 border-rose-400 text-rose-300 shadow-[0_0_6px_#fb7185]' 
                             : (isRedActive 
-                                ? 'bg-amber-950/80 border-amber-400 text-yellow-300 animate-pulse font-bold' 
+                                ? 'bg-amber-950/80 border-amber-400 text-amber-300 animate-pulse font-bold' 
                                 : 'bg-slate-900/50 border-slate-800 text-slate-600')
                     }">
-                        <span class="text-xs">🚄</span>
-                        <span class="text-[9px] truncate w-full">${targetNum}랩</span>
+                        <span class="text-xs">🏎️</span>
+                        <span class="text-[9px] truncate w-full">${targetNum}번</span>
                     </div>
                 `;
             }
@@ -1006,49 +1073,49 @@
             const myMembers = cleanMemberList(myRawMembers);
             const currentStage = team === 'blue' ? (data.blueStage || 0) : (data.redStage || 0);
             const currentMission = team === 'blue' ? data.blueMission : data.redMission;
-            const kills = team === 'blue' ? (data.blueKills || 0) : (data.redKills || 0);
-            const targetNum = Math.min(7, kills + 1);
+            const completions = team === 'blue' ? (data.blueScore || 0) : (data.redScore || 0);
+            const targetNum = Math.min(7, completions + 1);
 
             if (!currentMission) return;
 
-            document.getElementById('equation-clue-display').innerText = currentMission.clueText;
-            document.getElementById('current-op-name').innerText = currentMission.trackName || `네온 서킷 #${targetNum}`;
+            document.getElementById('circuit-clue-display').innerText = currentMission.clueText;
+            document.getElementById('current-op-name').innerText = `${currentMission.trackName}`;
 
-            // Update Assembly Slots
-            const slotA = document.getElementById('slot-a');
-            const slotB = document.getElementById('slot-b');
-            const slotTarget = document.getElementById('slot-target');
+            // Update Puzzle HUD Slots
+            const slotSlope = document.getElementById('slot-slope');
+            const slotIntercept = document.getElementById('slot-intercept');
+            const slotGate = document.getElementById('slot-gate');
 
             if (currentStage >= 1) {
-                slotA.innerHTML = `<span class="text-cyan-300 font-bold">기울기 a = ${currentMission.a} 확정</span>`;
-                slotA.className = "px-2.5 py-1 rounded bg-cyan-950/80 border border-cyan-400 text-cyan-300 font-bold shadow-[0_0_8px_#22d3ee]";
+                slotSlope.innerHTML = `<span class="text-cyan-300 font-bold">a = ${currentMission.a} (경사 결속)</span>`;
+                slotSlope.className = "px-2.5 py-1 rounded bg-cyan-950/80 border border-cyan-400 text-cyan-300 font-bold shadow-[0_0_8px_#22d3ee]";
             } else {
-                slotA.innerText = "기울기 a (경사각)";
-                slotA.className = "px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-400 font-bold";
+                slotSlope.innerText = "기울기 a (경사각)";
+                slotSlope.className = "px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-400 font-bold";
             }
 
             if (currentStage >= 2) {
-                slotB.innerHTML = `<span class="text-yellow-300 font-bold">y절편 b = ${currentMission.b} 고정</span>`;
-                slotB.className = "px-2.5 py-1 rounded bg-amber-950/80 border border-yellow-400 text-yellow-300 font-bold shadow-[0_0_8px_#f59e0b]";
+                slotIntercept.innerHTML = `<span class="text-yellow-300 font-bold">b = ${currentMission.b >= 0 ? '+' + currentMission.b : currentMission.b} (앵커 결속)</span>`;
+                slotIntercept.className = "px-2.5 py-1 rounded bg-amber-950/80 border border-yellow-400 text-yellow-300 font-bold shadow-[0_0_8px_#f59e0b]";
             } else {
-                slotB.innerText = "y절편 b (고도)";
-                slotB.className = "px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-400 font-bold";
+                slotIntercept.innerText = "y절편 b (고도)";
+                slotIntercept.className = "px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-400 font-bold";
             }
 
             if (currentStage >= 3) {
-                slotTarget.innerHTML = `<span class="text-fuchsia-300 font-bold">부스터 링 (${currentMission.xGate}, ${currentMission.yGate}) 락온!</span>`;
-                slotTarget.className = "px-2.5 py-1 rounded bg-fuchsia-950 border-2 border-fuchsia-400 text-fuchsia-300 font-bold shadow-[0_0_12px_#e879f9] animate-pulse";
+                slotGate.innerHTML = `<span class="text-fuchsia-300 font-bold">게이트 (${currentMission.xGate}, ${currentMission.yGate}) 락온!</span>`;
+                slotGate.className = "px-2.5 py-1 rounded bg-fuchsia-950 border-2 border-fuchsia-400 text-fuchsia-300 font-bold shadow-[0_0_12px_#e879f9] animate-pulse";
             } else {
-                slotTarget.innerText = "게이트 (x, y) 락온 대기";
-                slotTarget.className = "px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-400 font-bold";
+                slotGate.innerText = "게이트 통과점 락온 대기";
+                slotGate.className = "px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-400 font-bold";
             }
 
             const teamBadge = document.getElementById('my-team-badge');
             if (team === 'blue') {
-                teamBadge.innerText = `🔵 ALPHA BLUE [CIRCUIT #${targetNum}/7]`;
+                teamBadge.innerText = `🔵 BLUE NITRO [CIRCUIT #${targetNum}/7]`;
                 teamBadge.className = 'text-xs px-3.5 py-1 bg-cyan-500/25 text-cyan-300 border border-cyan-400 rounded-full font-bold font-racing';
             } else {
-                teamBadge.innerText = `🔴 OMEGA RED [CIRCUIT #${targetNum}/7]`;
+                teamBadge.innerText = `🔴 RED TURBO [CIRCUIT #${targetNum}/7]`;
                 teamBadge.className = 'text-xs px-3.5 py-1 bg-rose-500/25 text-rose-300 border border-rose-400 rounded-full font-bold font-racing';
             }
 
@@ -1056,12 +1123,12 @@
             const myIndex = myMembers.findIndex(m => m.id === myPlayerId || m.name === currentUserName);
             const activeMemberIndex = getStageActorIndex(currentStage, teamSize, targetNum);
             const activeMemberObj = myMembers[activeMemberIndex];
-            const activeMemberName = activeMemberObj ? activeMemberObj.name : `${activeMemberIndex + 1}번 라이더`;
+            const activeMemberName = activeMemberObj ? activeMemberObj.name : `${activeMemberIndex + 1}번 드라이버`;
 
             const isMyTurn = (myIndex !== -1) && (myIndex === activeMemberIndex);
 
             if (isMyTurn && !prevWasMyTurn) {
-                sfx.railConnect();
+                sfx.radarPing();
             }
             prevWasMyTurn = isMyTurn;
 
@@ -1083,18 +1150,19 @@
             const currentActorEl = document.getElementById('current-actor-name');
             const stepNumInput = document.getElementById('step-number-input');
 
+            // Prevent input auto-clearing unless stage actually changes
             const isStageChanged = (lastRenderedStage !== currentStage || lastRenderedTarget !== targetNum);
             lastRenderedStage = currentStage;
             lastRenderedTarget = targetNum;
 
             if (currentStage === 0) {
-                instEl.innerText = `【1단계: 기울기 경사 분석관】 변화율 힌트를 분석하여 네온 레일의 기울기 a (오르막/내리막 경사각)를 선택하세요!`;
+                instEl.innerText = `【1단계: 기울기 경사관】 주어진 조건(또는 좌표 눈금)에서 x의 증가량에 대한 y의 증가량(기울기 a)을 계산하여 선택하세요!`;
             } else if (currentStage === 1) {
-                instEl.innerText = `【2단계: y절편 게이트 조준사】 레일이 y축과 만나는 시작 고도인 [ y절편 b ] 의 숫자 값을 계산해 입력하세요!`;
+                instEl.innerText = `【2단계: y절편 앵커사】 레일이 y축과 교차하는 기준 고도 [ y절편 b ] 의 숫자 값을 계산해 입력하세요!`;
             } else if (currentStage === 2) {
-                instEl.innerText = `【3단계: 부스터 링 락온사】 완성된 식 ${currentMission.eqStr} 에 x = ${currentMission.xGate} 를 대입하여 목표 게이트의 [ y좌표 ] 를 계산하세요!`;
+                instEl.innerText = `【3단계: 게이트 락온관】 완성된 일차함수식 ${currentMission.eqStr} 에 x = ${currentMission.xGate} 를 대입하여 게이트의 [ y좌표 ] 를 계산하세요!`;
             } else if (currentStage === 3) {
-                instEl.innerText = `【4단계: 음속 도약 점화관】 궤도 100% 결속! 카트 풀 스로틀! 전술 부스터를 점화하여 1,200km/h로 음속 도약하세요!`;
+                instEl.innerText = `【4단계: 음속 부스터 격발】 일차함수 궤도 100% 완전 결속! 전술 부스터를 선택해 1,200 km/h 음속 도약을 분사하세요!`;
             }
 
             if (isMyTurn) {
@@ -1103,9 +1171,9 @@
                     numControl.classList.add('hidden');
                     fireControl.classList.add('hidden');
                     slopeControl.classList.remove('hidden');
-                    currentMission.slopeChoices.forEach((sVal, sIdx) => {
-                        const btn = document.getElementById(`slope-btn-${sIdx}`);
-                        if (btn) btn.innerText = `기울기 a = ${sVal}`;
+                    currentMission.slopeChoices.forEach((choiceVal, idx) => {
+                        const btn = document.getElementById(`slope-btn-${idx}`);
+                        if (btn) btn.innerText = `기울기 a = ${choiceVal}`;
                     });
                 } else if (currentStage === 1 || currentStage === 2) {
                     slopeControl.classList.add('hidden');
@@ -1116,7 +1184,7 @@
                         stepNumInput.value = '';
                         stepNumInput.focus();
                     }
-                    stepNumInput.placeholder = currentStage === 1 ? "y절편 b 값 입력" : `게이트 y값 입력 (x=${currentMission.xGate})`;
+                    stepNumInput.placeholder = currentStage === 1 ? `y절편 b 값 입력` : `게이트 y좌표 입력`;
                 } else {
                     slopeControl.classList.add('hidden');
                     numControl.classList.add('hidden');
@@ -1127,14 +1195,14 @@
                 numControl.classList.add('hidden');
                 fireControl.classList.add('hidden');
                 waitingNotice.classList.remove('hidden');
-                currentActorEl.innerText = `${activeMemberName} (${activeMemberIndex + 1}번 라이더)`;
+                currentActorEl.innerText = `${activeMemberName} (${activeMemberIndex + 1}번 드라이버)`;
             }
 
             const stageTitles = [
-                "① 기울기 a (경사)",
-                "② y절편 b (고도)",
-                "③ 부스터 링 락온",
-                "④ 음속 도약 ⚡"
+                "① 기울기 경사관",
+                "② y절편 앵커사",
+                "③ 게이트 락온관",
+                "④ 음속 부스터 🚀"
             ];
 
             for (let s = 0; s < 4; s++) {
@@ -1156,6 +1224,7 @@
                 }
             }
         }
+
         window.submitSlopeStep = async function(choiceIdx) {
             if (isLockedOut) return;
             if (!lastKnownRoomData) return;
@@ -1166,16 +1235,16 @@
             if (currentStage !== 0) return;
 
             if (choiceIdx === mission.slopeCorrectIndex) {
-                sfx.unlockChirp();
+                sfx.railAssemble();
                 const nextData = { ...data };
                 if (myTeam === 'blue') nextData.blueStage = 1;
                 else nextData.redStage = 1;
 
-                showStepFeedback(`✨ [기울기 a = ${mission.a} 가설 성공!] 레일 경사각이 고정되었습니다! 2번 대원 y절편 조준 개시!`, false);
+                showStepFeedback(`✨ [레일 경사 결속!] 기울기 a = ${mission.a} 회전 고정 완료! 2번 대원 y절편 앵커 조준 개시!`, false);
                 nextData.updatedAt = Date.now();
                 await syncStateUpdate(nextData);
             } else {
-                showStepFeedback("❌ 기울기 산출 오류! (x증가량 분의 y증가량 부호와 절댓값을 확인하세요. 5초 탈선 냉각)", true);
+                showStepFeedback("❌ 기울기 계산 오류! x증가량과 y증가량의 부호와 비율을 다시 확인하세요. (5초 과열 냉각)", true);
                 triggerLockoutPenalty();
             }
         };
@@ -1199,16 +1268,16 @@
 
             if (currentStage === 1) {
                 if (val === mission.b) {
-                    sfx.unlockChirp();
+                    sfx.railAssemble();
                     const nextData = { ...data };
                     if (myTeam === 'blue') nextData.blueStage = 2;
                     else nextData.redStage = 2;
 
-                    showStepFeedback(`✨ [y절편 b = ${val} 고정 완료!] 레일 시작 고도가 결속되었습니다! 3번 대원 부스터 링 락온 개시!`, false);
+                    showStepFeedback(`✨ [레일 앵커 결속!] y절편 b = ${val} 고도 잠금 완료! 일차함수 ${mission.eqStr} 활성화! 3번 대원 게이트 락온 개시!`, false);
                     nextData.updatedAt = Date.now();
                     await syncStateUpdate(nextData);
                 } else {
-                    showStepFeedback("❌ y절편 오류! x=0일 때의 y값과 부호를 재확인하세요. (5초 탈선 냉각)", true);
+                    showStepFeedback(`❌ y절편 계산 오류! x=0 일 때의 y축 통과 좌표와 부호를 확인하세요. (5초 과열 냉각)`, true);
                     triggerLockoutPenalty();
                 }
             } else if (currentStage === 2) {
@@ -1218,47 +1287,44 @@
                     if (myTeam === 'blue') nextData.blueStage = 3;
                     else nextData.redStage = 3;
 
-                    showStepFeedback(`🎯 [부스터 링 (${mission.xGate}, ${mission.yGate}) 락온!] 엔진 풀 가동! 4번 대원 부스터를 점화하세요!`, false);
+                    showStepFeedback(`🎯 [게이트 (${mission.xGate}, ${mission.yGate}) 락온 완료!] 레일 100% 완전 결속! 4번 드라이버 음속 부스터를 분사하세요!`, false);
                     nextData.updatedAt = Date.now();
                     await syncStateUpdate(nextData);
                 } else {
-                    showStepFeedback(`❌ 게이트 y값 대입 오류! ${mission.eqStr} 에 x=${mission.xGate} 를 대입하세요. (5초 탈선 냉각)`, true);
+                    showStepFeedback(`❌ 게이트 좌표 오류! 식 ${mission.eqStr} 에 x=${mission.xGate} 를 대입한 사칙연산을 재확인하세요. (5초 과열 냉각)`, true);
                     triggerLockoutPenalty();
                 }
             }
         };
 
-        window.openPayloadModal = function() {
+        window.openBoosterModal = function() {
             document.getElementById('payload-modal').classList.remove('hidden');
         };
 
-        window.choosePayload = async function(payloadType) {
+        window.chooseBoosterPayload = async function(payloadType) {
             document.getElementById('payload-modal').classList.add('hidden');
             if (!lastKnownRoomData) return;
             const data = lastKnownRoomData;
             const enemyTeam = myTeam === 'blue' ? 'red' : 'blue';
             const mission = myTeam === 'blue' ? data.blueMission : data.redMission;
 
-            sfx.boosterBlast();
-            triggerKartBoosterSprint(myTeam, mission.a, mission.b, payloadType, mission.xGate, mission.yGate);
+            sfx.hyperBoost();
+            triggerSonicLeapLaunch(myTeam, mission, payloadType);
 
             const nextData = { ...data };
-            nextData.lastBoost = {
+            nextData.lastBooster = {
                 fromTeam: myTeam,
-                a: mission.a,
-                b: mission.b,
-                xGate: mission.xGate,
-                yGate: mission.yGate,
+                mission: mission,
                 payloadType: payloadType,
                 id: Date.now()
             };
 
-            if (payloadType === 'electro_slick') {
+            if (payloadType === 'oil_slick') {
                 nextData.slickTarget = enemyTeam;
                 nextData.slickId = Date.now();
-                showStepFeedback(`🛢️ [${mission.trackName}] 1,200km/h 음속 돌파! 상대 트랙에 슬릭탄 투척!`, false);
+                showStepFeedback(`🛢️ [${mission.trackName}] 1,200 km/h 음속 돌파! 상대 트랙에 오일 슬릭 살포!`, false);
             } else {
-                showStepFeedback(`🚀 [${mission.trackName}] 1,200km/h 음속 도약 돌파! 서킷 완주! (BOOST! ⚡)`, false);
+                showStepFeedback(`⚡ [${mission.trackName}] 1,200 km/h 초광속 음속 도약! 소닉 붐 폭발!`, false);
             }
 
             setTimeout(async () => {
@@ -1266,20 +1332,20 @@
                 const hitData = { ...latest };
 
                 if (myTeam === 'blue') {
-                    hitData.blueKills = Math.min(7, (hitData.blueKills || 0) + 1);
-                    const nextTargetNum = hitData.blueKills + 1;
+                    hitData.blueScore = Math.min(7, (hitData.blueScore || 0) + 1);
+                    const nextTargetNum = hitData.blueScore + 1;
                     hitData.blueStage = 0;
                     hitData.blueMission = generateLinearRailMission(nextTargetNum);
                 } else {
-                    hitData.redKills = Math.min(7, (hitData.redKills || 0) + 1);
-                    const nextTargetNum = hitData.redKills + 1;
+                    hitData.redScore = Math.min(7, (hitData.redScore || 0) + 1);
+                    const nextTargetNum = hitData.redScore + 1;
                     hitData.redStage = 0;
                     hitData.redMission = generateLinearRailMission(nextTargetNum);
                 }
 
                 hitData.updatedAt = Date.now();
                 await syncStateUpdate(hitData);
-            }, 900);
+            }, 1100);
 
             nextData.updatedAt = Date.now();
             await syncStateUpdate(nextData);
@@ -1311,7 +1377,7 @@
         }
 
         window.sendQuickCheer = function(text) {
-            showStepFeedback(`📻 [크루 무전] ${text}`, false);
+            showStepFeedback(`📻 [레이스 무전] ${text}`, false);
             sfx.playTone(620, 'sine', 0.12, 0.2);
         };
 
@@ -1328,29 +1394,26 @@
         function triggerGrandVictory(winnerTeam, roomData) {
             sfx.victoryFanfare();
             const isBlueWin = winnerTeam === 'blue';
-            const winnerName = isBlueWin ? "🔵 알파 블루 네온 레일팀" : "🔴 오메가 레드 터보 레일팀";
+            const winnerName = isBlueWin ? "🔵 블루 니트로 레일팀" : "🔴 레드 터보 레일팀";
             const rawMembers = isBlueWin ? roomData.blueMembers : roomData.redMembers;
             const members = (rawMembers || []).map(m => m.name || m);
 
-            document.getElementById('victory-team-title').innerText = `${winnerName} 7개 서킷 완전 돌파 대승리!`;
-            document.getElementById('victory-members-list').innerText = members.length > 0 ? members.join(', ') : '단독 라이더';
+            document.getElementById('victory-team-title').innerText = `${winnerName} 7대 서킷 전탄 완주 대승리!`;
+            document.getElementById('victory-members-list').innerText = members.length > 0 ? members.join(', ') : '단독 드라이버';
             document.getElementById('victory-total-time').innerText = `${((Date.now() - missionStartTime) / 1000).toFixed(1)}초`;
 
             setTimeout(() => {
                 document.getElementById('victory-modal').classList.remove('hidden');
             }, 1000);
         }
+
         // ==========================================
-        // 🚀 HIGH-SPEED 2D NEON RAIL CANVAS ENGINE
+        // 🚀 DYNAMIC NEON RAIL 2D CANVAS ENGINE
         // ==========================================
         let canvas, ctx;
         let tacticalPings = [];
         let speedBoosters = [];
-        let sonicShockwaves = [];
-        let warpTrails = [];
-        let sparks = [];
-        let gridOffset = 0;
-        let screenShake = 0;
+        let sonicBooms = [];
 
         function initRailCanvas() {
             canvas = document.getElementById('rail-canvas');
@@ -1382,12 +1445,12 @@
         }
 
         function triggerPingFromCoords(cx, cy) {
-            sfx.engineRev();
-            addTacticalPingCoords(cx, cy, currentUserName || '라이더');
+            sfx.tacticalPing();
+            addTacticalPingCoords(cx, cy, currentUserName || '드라이버');
 
             if (bc) {
                 try {
-                    bc.postMessage({ type: 'LOCAL_PING', team: myTeam, x: Math.round(cx), y: Math.round(cy), sender: currentUserName || '라이더' });
+                    bc.postMessage({ type: 'LOCAL_PING', team: myTeam, x: Math.round(cx), y: Math.round(cy), sender: currentUserName || '드라이버' });
                 } catch (e) {}
             }
 
@@ -1399,7 +1462,7 @@
                     team: myTeam,
                     x: Math.round(cx),
                     y: Math.round(cy),
-                    sender: currentUserName || '라이더',
+                    sender: currentUserName || '드라이버',
                     id: Date.now() + Math.random()
                 };
                 syncStateUpdate(pingData);
@@ -1417,20 +1480,38 @@
             });
         }
 
-        function triggerKartBoosterSprint(team, a, b, payloadType, xGate = 2, yGate = 5) {
-            screenShake = 18; // Trigger intense screen shake!
-            
+        function triggerSonicLeapLaunch(fromTeam, mission, payloadType) {
             speedBoosters.push({
-                team: team,
-                a: a,
-                b: b,
-                xGate: xGate,
-                yGate: yGate,
-                progress: 0,
-                speed: 0.048,
-                hasSonicBoomed: false,
-                color: payloadType === 'electro_slick' ? '#d946ef' : (team === 'red' ? '#f43f5e' : '#06b6d4')
+                team: fromTeam,
+                mission: mission,
+                payloadType: payloadType,
+                progress: 0
             });
+
+            // Trigger visual screen shake
+            const arenaBox = canvas.parentElement;
+            if (arenaBox) {
+                arenaBox.classList.remove('screen-shaking');
+                void arenaBox.offsetWidth; // trigger reflow
+                arenaBox.classList.add('screen-shaking');
+                setTimeout(() => arenaBox.classList.remove('screen-shaking'), 380);
+            }
+        }
+
+        function triggerSonicShockwave(x, y) {
+            for (let i = 0; i < 50; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 9 + 3;
+                sonicBooms.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    radius: Math.random() * 4 + 2,
+                    color: '#38bdf8',
+                    alpha: 1
+                });
+            }
         }
 
         function renderRailLoop() {
@@ -1441,234 +1522,124 @@
             const h = canvas.height;
             const midX = w / 2;
             const midY = h / 2;
-            const scale = Math.min(w, h) / 14; // 1 unit in pixels
+            const scale = Math.min(w, h) / 13; // 1 coordinate unit on math plane
 
-            // Dynamic screen shake
-            ctx.save();
-            if (screenShake > 0) {
-                const sx = (Math.random() - 0.5) * screenShake;
-                const sy = (Math.random() - 0.5) * screenShake;
-                ctx.translate(sx, sy);
-                screenShake *= 0.88;
-                if (screenShake < 0.5) screenShake = 0;
-            }
-
-            // Speed gauge telemetry on HUD
-            let activeSpeed = 0;
-            if (speedBoosters.length > 0) {
-                activeSpeed = 1200; // 음속 돌파
-            } else if (lastKnownRoomData) {
-                const curStage = myTeam === 'blue' ? (lastKnownRoomData.blueStage || 0) : (lastKnownRoomData.redStage || 0);
-                if (curStage === 3) activeSpeed = 380; // 엔진 풀 회전
-                else if (curStage > 0) activeSpeed = 120;
-            }
-            const speedMeterEl = document.getElementById(`${myTeam === 'blue' ? 'blue' : 'red'}-speed-meter`);
-            if (speedMeterEl) speedMeterEl.innerText = `${activeSpeed} km/h`;
-
-            gridOffset = (gridOffset + (activeSpeed > 500 ? 5.5 : 1.2)) % 35;
-
-            // 1. Synthwave Dark Neon Grid Background
+            // 1. Synthwave Grid Background
             ctx.fillStyle = '#020617';
             ctx.fillRect(0, 0, w, h);
 
-            // Speed Grid Lines
-            ctx.strokeStyle = activeSpeed > 500 ? 'rgba(6, 182, 212, 0.22)' : 'rgba(6, 182, 212, 0.08)';
-            ctx.lineWidth = activeSpeed > 500 ? 1.5 : 1;
-            for (let x = (gridOffset % 35); x < w; x += 35) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, h);
-                ctx.stroke();
-            }
-            for (let y = 0; y < h; y += 35) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(w, y);
-                ctx.stroke();
-            }
-
-            // High-Speed Warp Speed Lines during boost
-            if (activeSpeed > 500) {
+            // 2. Coordinate Grid & Axes
+            if (showGridPlane) {
                 ctx.save();
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-                ctx.lineWidth = 2;
-                for (let i = 0; i < 14; i++) {
-                    const lx = Math.random() * w;
-                    const ly = Math.random() * h;
-                    const len = Math.random() * 60 + 40;
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.14)';
+                ctx.lineWidth = 1;
+                for (let i = -6; i <= 6; i++) {
+                    if (i === 0) continue;
                     ctx.beginPath();
-                    ctx.moveTo(lx, ly);
-                    ctx.lineTo(lx - len, ly);
+                    ctx.moveTo(midX + i * scale, 0);
+                    ctx.lineTo(midX + i * scale, h);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(0, midY - i * scale);
+                    ctx.lineTo(w, midY - i * scale);
                     ctx.stroke();
                 }
+
+                // Main X & Y Axis Lines
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, midY);
+                ctx.lineTo(w, midY);
+                ctx.moveTo(midX, 0);
+                ctx.lineTo(midX, h);
+                ctx.stroke();
+
+                // Axis Numbers
+                ctx.font = 'bold 10px "JetBrains Mono", monospace';
+                ctx.fillStyle = '#67e8f9';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                for (let i = -6; i <= 6; i++) {
+                    if (i === 0) continue;
+                    ctx.fillText(i, midX + i * scale, midY + 12);
+                    ctx.fillText(i, midX - 12, midY - i * scale);
+                }
+                ctx.fillText("O", midX - 8, midY + 10);
+                ctx.fillText("x", w - 10, midY - 10);
+                ctx.fillText("y", midX + 10, 10);
                 ctx.restore();
             }
 
-            // 2. Coordinate Grid & Axes
-            ctx.save();
-            ctx.strokeStyle = 'rgba(56, 189, 248, 0.15)';
-            ctx.lineWidth = 1;
-            for (let i = -6; i <= 6; i++) {
-                if (i === 0) continue;
-                ctx.beginPath();
-                ctx.moveTo(midX + i * scale, 0);
-                ctx.lineTo(midX + i * scale, h);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(0, midY - i * scale);
-                ctx.lineTo(w, midY - i * scale);
-                ctx.stroke();
-            }
-
-            // Main X & Y Axis Lines
-            ctx.strokeStyle = '#38bdf8';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(0, midY);
-            ctx.lineTo(w, midY);
-            ctx.moveTo(midX, 0);
-            ctx.lineTo(midX, h);
-            ctx.stroke();
-
-            // Axis Numbers
-            ctx.font = 'bold 10px "JetBrains Mono", monospace';
-            ctx.fillStyle = '#67e8f9';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            for (let i = -6; i <= 6; i++) {
-                if (i === 0) continue;
-                ctx.fillText(i, midX + i * scale, midY + 12);
-                ctx.fillText(i, midX - 12, midY - i * scale);
-            }
-            ctx.fillText("O", midX - 8, midY + 10);
-            ctx.fillText("x", w - 10, midY - 10);
-            ctx.fillText("y", midX + 10, 10);
-            ctx.restore();
-
-            // 3. Draw Active Linear Function Rail & Standby Cart
+            // 3. Draw Active Linear Function Trajectory with Dynamic Assembly
             if (lastKnownRoomData) {
                 const mission = myTeam === 'blue' ? lastKnownRoomData.blueMission : lastKnownRoomData.redMission;
                 const currentStage = myTeam === 'blue' ? (lastKnownRoomData.blueStage || 0) : (lastKnownRoomData.redStage || 0);
                 drawActiveNeonRailway(midX, midY, scale, mission, currentStage);
             }
 
-            // 4. Opponent PiP Mini Feed
+            // 4. Opponent PiP Mini Race Feed (Top Right)
             drawOpponentMiniFeed(w - 135, 45);
 
-            // 5. Booster Sprinters (Hyper Speed Leap along y = ax + b)
+            // 5. High-Speed 1,200 km/h Sonic Warp Cart Leap Simulation
             for (let i = speedBoosters.length - 1; i >= 0; i--) {
                 const b = speedBoosters[i];
-                b.progress += b.speed;
-                b.speed += 0.004; // Accelerating rush!
+                b.progress += 0.038; // Ultra fast supersonic motion
 
-                const startXMath = -6;
-                const endXMath = 7;
-                const curXMath = startXMath + (endXMath - startXMath) * b.progress;
-                const curYMath = b.a * curXMath + b.b;
+                const a = b.mission.a;
+                const mB = b.mission.b;
 
-                const curCanvasX = midX + curXMath * scale;
-                const curCanvasY = midY - curYMath * scale;
+                // Travel across x from -5.5 to +5.5 along y = ax + b
+                const startX = -5.5;
+                const endX = 5.5;
+                const curMathX = startX + (endX - startX) * b.progress;
+                const curMathY = a * curMathX + mB;
 
-                // Sonic boom check when hitting the gate (around progress 0.6)
-                if (!b.hasSonicBoomed && b.progress >= 0.58) {
-                    b.hasSonicBoomed = true;
-                    screenShake = 22; // Maximum impact shake!
-                    sonicShockwaves.push({
-                        x: midX + b.xGate * scale,
-                        y: midY - b.yGate * scale,
-                        radius: 10,
-                        maxRadius: 100,
+                const curCanvasX = midX + curMathX * scale;
+                const curCanvasY = midY - curMathY * scale;
+
+                ctx.save();
+                const cartColor = b.payloadType === 'oil_slick' ? '#f59e0b' : (b.payloadType === 'quantum_warp' ? '#d946ef' : '#38bdf8');
+                ctx.strokeStyle = cartColor;
+                ctx.fillStyle = cartColor;
+                ctx.shadowBlur = 24;
+                ctx.shadowColor = cartColor;
+
+                // Cart Rotation Angle along line
+                const lineAngle = -Math.atan(a);
+                ctx.translate(curCanvasX, curCanvasY);
+                ctx.rotate(lineAngle);
+
+                // Supersonic Aerodynamic Kart Body
+                ctx.beginPath();
+                ctx.roundRect ? ctx.roundRect(-18, -8, 36, 16, 4) : ctx.rect(-18, -8, 36, 16);
+                ctx.fill();
+
+                // Warp Thruster Flame Particles
+                for (let t = 0; t < 3; t++) {
+                    sonicBooms.push({
+                        x: curCanvasX + (Math.random() - 0.5) * 8,
+                        y: curCanvasY + (Math.random() - 0.5) * 8,
+                        vx: -Math.cos(lineAngle) * (Math.random() * 5 + 3),
+                        vy: -Math.sin(lineAngle) * (Math.random() * 5 + 3),
+                        radius: Math.random() * 4 + 2,
                         color: '#facc15',
-                        alpha: 1
+                        alpha: 0.8
                     });
                 }
-
-                // High-speed jet trail
-                warpTrails.push({
-                    x: curCanvasX,
-                    y: curCanvasY,
-                    color: b.color,
-                    alpha: 0.9
-                });
-
-                // Blazing Super Kart Body
-                ctx.save();
-                ctx.translate(curCanvasX, curCanvasY);
-                const angle = -Math.atan(b.a);
-                ctx.rotate(angle);
-
-                ctx.shadowBlur = 32;
-                ctx.shadowColor = b.color;
-                ctx.fillStyle = '#ffffff';
-                ctx.beginPath();
-                ctx.ellipse(0, 0, 24, 8, 0, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Blazing Flame Exhaust
-                ctx.fillStyle = '#facc15';
-                ctx.beginPath();
-                ctx.moveTo(-20, -5);
-                ctx.lineTo(-45 - Math.random() * 20, 0);
-                ctx.lineTo(-20, 5);
-                ctx.closePath();
-                ctx.fill();
                 ctx.restore();
 
-                // Spark burst
-                for (let t = 0; t < 4; t++) {
-                    sparks.push({
-                        x: curCanvasX + (Math.random() - 0.5) * 16,
-                        y: curCanvasY + (Math.random() - 0.5) * 16,
-                        vx: -Math.cos(angle) * (Math.random() * 8 + 4),
-                        vy: -Math.sin(angle) * (Math.random() * 8 + 4),
-                        radius: Math.random() * 4 + 2,
-                        color: b.color,
-                        alpha: 1
-                    });
+                // Shockwave when passing gate ring
+                if (Math.abs(curMathX - b.mission.xGate) < 0.3 && !b.gateExploded) {
+                    b.gateExploded = true;
+                    sfx.playTone(880, 'sine', 0.25, 0.4);
+                    triggerSonicShockwave(midX + b.mission.xGate * scale, midY - b.mission.yGate * scale);
                 }
 
                 if (b.progress >= 1) speedBoosters.splice(i, 1);
             }
 
-            // 6. Sonic Shockwaves
-            for (let i = sonicShockwaves.length - 1; i >= 0; i--) {
-                const sw = sonicShockwaves[i];
-                sw.radius += 5.5;
-                sw.alpha -= 0.04;
-
-                ctx.save();
-                ctx.strokeStyle = sw.color;
-                ctx.lineWidth = 4;
-                ctx.globalAlpha = Math.max(0, sw.alpha);
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = sw.color;
-                ctx.beginPath();
-                ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.restore();
-
-                if (sw.alpha <= 0) sonicShockwaves.splice(i, 1);
-            }
-
-            // 7. Warp Trails
-            for (let i = warpTrails.length - 1; i >= 0; i--) {
-                const wt = warpTrails[i];
-                wt.alpha -= 0.05;
-
-                ctx.save();
-                ctx.fillStyle = wt.color;
-                ctx.globalAlpha = Math.max(0, wt.alpha);
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = wt.color;
-                ctx.beginPath();
-                ctx.arc(wt.x, wt.y, 6, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-
-                if (wt.alpha <= 0) warpTrails.splice(i, 1);
-            }
-
-            // 8. Tactical Pings
+            // 6. Tactical Pings
             for (let i = tacticalPings.length - 1; i >= 0; i--) {
                 const p = tacticalPings[i];
                 p.radius += 0.9;
@@ -1690,168 +1661,247 @@
                 if (p.alpha <= 0) tacticalPings.splice(i, 1);
             }
 
-            // 9. Sparks
-            for (let i = sparks.length - 1; i >= 0; i--) {
-                const exp = sparks[i];
+            // 7. Sonic Boom & Thruster Particles
+            for (let i = sonicBooms.length - 1; i >= 0; i--) {
+                const exp = sonicBooms[i];
                 exp.x += exp.vx;
                 exp.y += exp.vy;
                 exp.alpha -= 0.035;
 
                 ctx.save();
-                ctx.globalAlpha = Math.max(0, exp.alpha);
+                ctx.globalAlpha = exp.alpha;
                 ctx.fillStyle = exp.color;
+                ctx.shadowBlur = 14;
+                ctx.shadowColor = exp.color;
                 ctx.beginPath();
                 ctx.arc(exp.x, exp.y, exp.radius, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
 
-                if (exp.alpha <= 0) sparks.splice(i, 1);
+                if (exp.alpha <= 0) sonicBooms.splice(i, 1);
             }
-
-            ctx.restore(); // restore screen shake
 
             requestAnimationFrame(renderRailLoop);
         }
+
         function drawActiveNeonRailway(cx, cy, scale, mission, currentStage) {
             if (!mission) return;
 
             ctx.save();
 
             const a = mission.a;
-            const b = currentStage >= 2 ? mission.b : 0;
+            const b = mission.b;
             const isRailLocked = currentStage >= 3;
 
-            // Rail Drawing
-            const x1 = -6, y1 = a * x1 + b;
-            const x2 = 6, y2 = a * x2 + b;
+            // 1. Clue Points P1(x1, y1) & P2(x2, y2)
+            // (NO Δx, Δy spoiler labels! Students must read grid ticks or calculate themselves)
+            const p1CanvasX = cx + mission.x1 * scale;
+            const p1CanvasY = cy - mission.y1 * scale;
+            const p2CanvasX = cx + mission.x2 * scale;
+            const p2CanvasY = cy - mission.y2 * scale;
 
-            if (currentStage >= 1) {
-                // Slope a is confirmed: glowing energetic track
-                ctx.strokeStyle = isRailLocked ? '#38bdf8' : '#06b6d4';
+            // Draw Point 1 Beacon
+            ctx.fillStyle = '#38bdf8';
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = '#38bdf8';
+            ctx.beginPath();
+            ctx.arc(p1CanvasX, p1CanvasY, 5.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.font = 'bold 11px "JetBrains Mono", monospace';
+            ctx.fillStyle = '#bae6fd';
+            ctx.textAlign = 'right';
+            ctx.fillText(`P1(${mission.x1}, ${mission.y1})`, p1CanvasX - 8, p1CanvasY - 4);
+
+            // Draw Point 2 Beacon
+            ctx.beginPath();
+            ctx.arc(p2CanvasX, p2CanvasY, 5.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.textAlign = 'left';
+            ctx.fillText(`P2(${mission.x2}, ${mission.y2})`, p2CanvasX + 8, p2CanvasY - 4);
+
+            // 2. Exact Linear Function Neon Rail (y = ax + b) with Dynamic Mechanical Assembly
+            // Visible range: x from -6 to +6
+            const xLeft = -6;
+            const xRight = 6;
+
+            if (currentStage >= 2) {
+                // Stage >= 2: Full Equation y = ax + b firmly locked into place!
+                const yLeft = a * xLeft + b;
+                const yRight = a * xRight + b;
+
+                ctx.strokeStyle = '#06b6d4';
                 ctx.lineWidth = isRailLocked ? 4.5 : 3;
-                ctx.shadowBlur = isRailLocked ? 22 : 12;
+                ctx.shadowBlur = isRailLocked ? 24 : 14;
+                ctx.shadowColor = '#06b6d4';
+
+                // Main Rail Beam
+                ctx.beginPath();
+                ctx.moveTo(cx + xLeft * scale, cy - yLeft * scale);
+                ctx.lineTo(cx + xRight * scale, cy - yRight * scale);
+                ctx.stroke();
+
+                // Dual Parallel Cyber Tracks when fully assembled
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([8, 6]);
+                const normAngle = Math.atan(a) + Math.PI / 2;
+                const offsetPx = 5;
+                const ox = Math.cos(normAngle) * offsetPx;
+                const oy = Math.sin(normAngle) * offsetPx;
+
+                ctx.beginPath();
+                ctx.moveTo(cx + xLeft * scale + ox, cy - yLeft * scale - oy);
+                ctx.lineTo(cx + xRight * scale + ox, cy - yRight * scale - oy);
+                ctx.moveTo(cx + xLeft * scale - ox, cy - yLeft * scale + oy);
+                ctx.lineTo(cx + xRight * scale - ox, cy - yRight * scale + oy);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+            } else if (currentStage === 1) {
+                // Stage 1: Slope is confirmed! But y-intercept is NOT locked yet.
+                // The rail rotates to the correct slope, but vertically floats/oscillates to show it's awaiting intercept!
+                const floatOffset = Math.sin(Date.now() / 180) * 1.2;
+                const tempB = b + floatOffset;
+                const yLeft = a * xLeft + tempB;
+                const yRight = a * xRight + tempB;
+
+                ctx.strokeStyle = 'rgba(6, 182, 212, 0.55)';
+                ctx.lineWidth = 2.5;
+                ctx.setLineDash([6, 4]);
+                ctx.shadowBlur = 8;
                 ctx.shadowColor = '#06b6d4';
 
                 ctx.beginPath();
-                ctx.moveTo(cx + x1 * scale, cy - y1 * scale);
-                ctx.lineTo(cx + x2 * scale, cy - y2 * scale);
-                ctx.stroke();
-
-                // Dual Parallel Neon Rails
-                ctx.lineWidth = 1.5;
-                ctx.setLineDash([8, 6]);
-                ctx.beginPath();
-                ctx.moveTo(cx + x1 * scale - 5, cy - y1 * scale - 5);
-                ctx.lineTo(cx + x2 * scale - 5, cy - y2 * scale - 5);
-                ctx.moveTo(cx + x1 * scale + 5, cy - y1 * scale + 5);
-                ctx.lineTo(cx + x2 * scale + 5, cy - y2 * scale + 5);
+                ctx.moveTo(cx + xLeft * scale, cy - yLeft * scale);
+                ctx.lineTo(cx + xRight * scale, cy - yRight * scale);
                 ctx.stroke();
                 ctx.setLineDash([]);
+
             } else {
-                // Stage 0: Scanning dashed trajectory (대기 상태)
-                ctx.strokeStyle = 'rgba(6, 182, 212, 0.35)';
+                // Stage 0: Slope is NOT confirmed!
+                // The rail is broken/unaligned (horizontal scan guide at origin), showing angle is uncalibrated
+                const unalignedAngle = Math.sin(Date.now() / 400) * 0.15;
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(unalignedAngle);
+                ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
                 ctx.lineWidth = 2;
                 ctx.setLineDash([6, 6]);
                 ctx.beginPath();
-                ctx.moveTo(cx - 5 * scale, cy);
-                ctx.lineTo(cx + 5 * scale, cy);
+                ctx.moveTo(-160, 0);
+                ctx.lineTo(160, 0);
                 ctx.stroke();
                 ctx.setLineDash([]);
+                
+                ctx.font = 'bold 10px "JetBrains Mono", monospace';
+                ctx.fillStyle = '#f87171';
+                ctx.textAlign = 'center';
+                ctx.fillText("⚠️ 레일 각도 미정렬 (기울기 a 계산 요망)", 0, -12);
+                ctx.restore();
             }
 
-            // Launch Pad Station (Starting Dock) at x = -5
-            const padXMath = -5;
-            const padYMath = (currentStage >= 1) ? (a * padXMath + b) : 0;
-            const padCanvasX = cx + padXMath * scale;
-            const padCanvasY = cy - padYMath * scale;
+            // 3. Highlight y-Intercept (0, b)
+            const interceptCanvasX = cx;
+            const interceptCanvasY = cy - b * scale;
 
-            ctx.save();
-            ctx.translate(padCanvasX, padCanvasY);
-            // Launch Pad Hologram Base
-            ctx.strokeStyle = '#38bdf8';
-            ctx.lineWidth = 2;
-            ctx.fillStyle = 'rgba(6, 182, 212, 0.25)';
-            ctx.beginPath();
-            ctx.roundRect ? ctx.roundRect(-22, -14, 44, 28, 6) : ctx.rect(-22, -14, 44, 28);
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.font = 'bold 9px "JetBrains Mono", monospace';
-            ctx.fillStyle = '#67e8f9';
-            ctx.textAlign = 'center';
-            ctx.fillText("LAUNCH DOCK", 0, 22);
-            ctx.restore();
-
-            // Highlight y-intercept (0, b)
             if (currentStage >= 2) {
-                const interceptCanvasX = cx;
-                const interceptCanvasY = cy - mission.b * scale;
-
+                // y-intercept fixed and locked!
                 ctx.fillStyle = '#facc15';
-                ctx.shadowBlur = 16;
+                ctx.shadowBlur = 18;
                 ctx.shadowColor = '#facc15';
                 ctx.beginPath();
-                ctx.arc(interceptCanvasX, interceptCanvasY, 7, 0, Math.PI * 2);
+                ctx.arc(interceptCanvasX, interceptCanvasY, 6, 0, Math.PI * 2);
                 ctx.fill();
 
                 ctx.font = 'bold 11px "JetBrains Mono", monospace';
                 ctx.fillStyle = '#fef08a';
                 ctx.textAlign = 'left';
-                ctx.fillText(`y절편 (0, ${mission.b})`, interceptCanvasX + 12, interceptCanvasY);
+                ctx.fillText(`y절편 (0, ${b}) 결속!`, interceptCanvasX + 10, interceptCanvasY - 4);
+
+            } else if (currentStage === 1) {
+                // Awaiting y-intercept input (pulsing target ring on y-axis)
+                const pulse = Math.sin(Date.now() / 150) * 3;
+                ctx.strokeStyle = '#facc15';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.arc(interceptCanvasX, interceptCanvasY, 9 + pulse, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.font = 'bold 10px "JetBrains Mono", monospace';
+                ctx.fillStyle = '#fef08a';
+                ctx.textAlign = 'left';
+                ctx.fillText(`y절편 (0, b) 조준 대기`, interceptCanvasX + 14, interceptCanvasY - 4);
             }
 
-            // Target Gate Ring (xGate, yGate)
+            // 4. Target Booster Gate (xGate, yGate)
             const gateCanvasX = cx + mission.xGate * scale;
-            const gateCanvasY = cy - mission.yGate * scale;
+            let gateCanvasY = cy - mission.yGate * scale;
 
             ctx.save();
-            ctx.translate(gateCanvasX, gateCanvasY);
 
             if (currentStage >= 3) {
-                // 100% Locked Booster Gate
-                const pulse = Math.sin(Date.now() / 140) * 5;
-                const ringR = 24 + pulse;
+                // Stage 3: Gate 100% Locked on the rail!
+                ctx.translate(gateCanvasX, gateCanvasY);
+                const pulse = Math.sin(Date.now() / 140) * 4;
+                const ringR = 22 + pulse;
 
                 ctx.strokeStyle = '#ef4444';
                 ctx.lineWidth = 3.5;
-                ctx.shadowBlur = 24;
+                ctx.shadowBlur = 25;
                 ctx.shadowColor = '#ef4444';
                 ctx.beginPath();
                 ctx.arc(0, 0, ringR, 0, Math.PI * 2);
                 ctx.stroke();
 
-                ctx.font = '24px sans-serif';
+                ctx.font = '22px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText("🚀", 0, -2);
+                ctx.fillText("🚀", 0, -1);
 
-                ctx.font = 'bold 12px "JetBrains Mono", monospace';
-                ctx.fillStyle = '#fef08a';
-                ctx.fillText(`게이트 (${mission.xGate}, ${mission.yGate}) 락온!`, 0, -ringR - 12);
+                ctx.font = 'bold 11px "JetBrains Mono", monospace';
+                ctx.fillStyle = '#fca5a5';
+                ctx.fillText(`게이트 (${mission.xGate}, ${mission.yGate}) 락온!`, 0, -ringR - 10);
+
             } else {
-                // Awaiting Lock
-                ctx.strokeStyle = 'rgba(217, 70, 239, 0.6)';
+                // Stage 0, 1, 2: Gate y is UNKNOWN! It oscillates vertically along x = xGate
+                const gateOscillate = Math.sin(Date.now() / 250) * 25;
+                const floatingY = (currentStage >= 2) ? (gateCanvasY + gateOscillate) : (cy + gateOscillate);
+                
+                ctx.translate(gateCanvasX, floatingY);
+                ctx.strokeStyle = 'rgba(217, 70, 239, 0.65)';
                 ctx.lineWidth = 2;
                 ctx.setLineDash([4, 4]);
                 ctx.beginPath();
-                ctx.arc(0, 0, 18, 0, Math.PI * 2);
+                ctx.arc(0, 0, 16, 0, Math.PI * 2);
                 ctx.stroke();
 
                 ctx.font = 'bold 10px "JetBrains Mono", monospace';
                 ctx.fillStyle = '#f0abfc';
                 ctx.textAlign = 'center';
-                ctx.fillText(`게이트 (${mission.xGate}, ?)`, 0, -24);
+                ctx.fillText(`게이트 (${mission.xGate}, ?)`, 0, -22);
             }
             ctx.restore();
 
-            // Cart in Standby on Launch Pad (Only if no active booster sprint)
+            // 5. Standby Cart on the Rail Launch Dock
             if (speedBoosters.length === 0) {
-                // Cart idle vibration
-                const engineVibe = (currentStage === 3) ? (Math.sin(Date.now() / 30) * 2.5) : (Math.sin(Date.now() / 150) * 0.8);
+                let cartXMath = -4.5;
+                let cartYMath = (currentStage >= 2) ? (a * cartXMath + b) : 0;
+                
+                // Clamp within reasonable canvas bounds
+                if (Math.abs(cartYMath) > 5) {
+                    cartXMath = a > 0 ? -2 : 2;
+                    cartYMath = (currentStage >= 2) ? (a * cartXMath + b) : 0;
+                }
+
+                const cartCanvasX = cx + cartXMath * scale;
+                const cartCanvasY = cy - cartYMath * scale;
+                const engineVibe = (currentStage === 3) ? (Math.sin(Date.now() / 30) * 2.5) : (Math.sin(Date.now() / 150) * 0.7);
                 
                 ctx.save();
-                ctx.translate(padCanvasX + engineVibe, padCanvasY);
-                const angle = currentStage >= 1 ? -Math.atan(a) : 0;
+                ctx.translate(cartCanvasX, cartCanvasY + engineVibe);
+                const angle = (currentStage >= 1) ? -Math.atan(a) : 0;
                 ctx.rotate(angle);
 
                 // Cart Body
@@ -1861,36 +1911,35 @@
                 ctx.shadowBlur = currentStage === 3 ? 18 : 8;
                 ctx.shadowColor = currentStage === 3 ? '#facc15' : '#38bdf8';
                 ctx.beginPath();
-                ctx.roundRect ? ctx.roundRect(-18, -8, 36, 16, 5) : ctx.rect(-18, -8, 36, 16);
+                ctx.roundRect ? ctx.roundRect(-16, -7, 32, 14, 4) : ctx.rect(-16, -7, 32, 14);
                 ctx.fill();
                 ctx.stroke();
 
-                // Standby / Engine Rev indicator
+                // Exhaust flame when ready to launch
                 if (currentStage === 3) {
-                    // Revving Flame at back of cart
                     ctx.fillStyle = '#f97316';
                     ctx.beginPath();
-                    ctx.moveTo(-18, -4);
-                    ctx.lineTo(-28 - Math.random() * 10, 0);
-                    ctx.lineTo(-18, 4);
+                    ctx.moveTo(-16, -4);
+                    ctx.lineTo(-26 - Math.random() * 8, 0);
+                    ctx.lineTo(-16, 4);
                     ctx.closePath();
                     ctx.fill();
 
-                    ctx.font = 'bold 10px "Orbitron", sans-serif';
+                    ctx.font = 'bold 9px "Orbitron", sans-serif';
                     ctx.fillStyle = '#fde047';
                     ctx.textAlign = 'center';
-                    ctx.fillText("READY TO LAUNCH!", 0, -14);
+                    ctx.fillText("READY TO LAUNCH!", 0, -12);
                 } else {
-                    ctx.font = 'bold 9px "JetBrains Mono", monospace';
+                    ctx.font = 'bold 8px "JetBrains Mono", monospace';
                     ctx.fillStyle = '#94a3b8';
                     ctx.textAlign = 'center';
-                    ctx.fillText("STANDBY", 0, -12);
+                    ctx.fillText("STANDBY", 0, -10);
                 }
 
                 // Headlight
                 ctx.fillStyle = '#facc15';
                 ctx.beginPath();
-                ctx.arc(16, 0, 3, 0, Math.PI * 2);
+                ctx.arc(14, 0, 2.5, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
             }
@@ -1901,7 +1950,7 @@
         function drawOpponentMiniFeed(x, y) {
             if (!lastKnownRoomData) return;
             const enemyTeam = myTeam === 'blue' ? 'red' : 'blue';
-            const enemyKills = enemyTeam === 'blue' ? (lastKnownRoomData.blueKills || 0) : (lastKnownRoomData.redKills || 0);
+            const enemyScore = enemyTeam === 'blue' ? (lastKnownRoomData.blueScore || 0) : (lastKnownRoomData.redScore || 0);
             const enemyStage = enemyTeam === 'blue' ? (lastKnownRoomData.blueStage || 0) : (lastKnownRoomData.redStage || 0);
 
             ctx.save();
@@ -1919,9 +1968,9 @@
 
             ctx.font = 'bold 10px "Orbitron", sans-serif';
             ctx.fillStyle = '#facc15';
-            ctx.fillText(`완주: ${enemyKills} / 7`, x + 8, y + 32);
+            ctx.fillText(`완주: ${enemyScore} / 7`, x + 8, y + 32);
 
-            const stageNames = ["1단계: 기울기", "2단계: y절편", "3단계: 게이트", "⚠️ 부스터!"];
+            const stageNames = ["1단계: 기울기", "2단계: 절편", "3단계: 게이트", "⚠️ 부스터!"];
             ctx.fillStyle = enemyStage === 3 ? '#ef4444' : '#e9d5ff';
             ctx.fillText(stageNames[enemyStage] || "대기", x + 8, y + 48);
 
