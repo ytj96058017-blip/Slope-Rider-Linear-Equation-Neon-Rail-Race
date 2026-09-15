@@ -586,8 +586,7 @@
     <!-- Main Game Logic and Firebase Synchronizer -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeFirestore, memoryLocalCache, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyChxrOzoTxFMy_BvkvNZLXAp1oRvN7Fb1g",
@@ -604,9 +603,9 @@
 
         try {
             const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            const auth = getAuth(app);
-            await signInAnonymously(auth);
+            db = initializeFirestore(app, {
+                localCache: memoryLocalCache()
+            });
 
             const badge = document.getElementById('db-status-badge');
             if (badge) {
@@ -901,8 +900,10 @@
         }
 
         window.joinTeam = async function(team) {
-            const name = document.getElementById('player-name').value.trim() || `드라이버_${Math.floor(Math.random()*900+100)}`;
-            const code = document.getElementById('room-code').value.trim() || 'slope201';
+            const nameInput = document.getElementById('player-name');
+            const codeInput = document.getElementById('room-code');
+            const name = (nameInput ? nameInput.value.trim() : '') || `드라이버_${Math.floor(Math.random()*900+100)}`;
+            const code = (codeInput ? codeInput.value.trim() : '') || 'slope201';
 
             currentUserName = name;
             currentRoomCode = code;
