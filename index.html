@@ -1885,11 +1885,12 @@
             }
 
             // 3. Highlight y-Intercept (0, b)
-            const interceptCanvasX = cx;
-            const interceptCanvasY = cy - b * scale;
-
+            // 풀기 전(currentStage < 2)에는 y축 위 특정 정답 위치에 원이나 텍스트를 절대 표시하지 않음 (스포일러 방지)
             if (currentStage >= 2) {
-                // y-intercept fixed and locked!
+                const interceptCanvasX = cx;
+                const interceptCanvasY = cy - b * scale;
+
+                // y-intercept fixed and locked after user solves Step 2!
                 ctx.fillStyle = '#facc15';
                 ctx.shadowBlur = 18;
                 ctx.shadowColor = '#facc15';
@@ -1899,24 +1900,9 @@
 
                 ctx.font = 'bold 11px "JetBrains Mono", monospace';
                 ctx.fillStyle = '#fef08a';
-                ctx.textAlign = 'left';
-                ctx.fillText(`y절편 (0, ${b}) 결속!`, interceptCanvasX + 10, interceptCanvasY - 4);
-
-            } else if (currentStage === 1) {
-                // Awaiting y-intercept input (pulsing target ring on y-axis)
-                const pulse = Math.sin(Date.now() / 150) * 3;
-                ctx.strokeStyle = '#facc15';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([4, 4]);
-                ctx.beginPath();
-                ctx.arc(interceptCanvasX, interceptCanvasY, 9 + pulse, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-                ctx.font = 'bold 10px "JetBrains Mono", monospace';
-                ctx.fillStyle = '#fef08a';
-                ctx.textAlign = 'left';
-                ctx.fillText(`y절편 (0, b) 조준 대기`, interceptCanvasX + 14, interceptCanvasY - 4);
+                ctx.textAlign = (b >= 0) ? 'left' : 'right';
+                const textOffsetX = (b >= 0) ? 10 : -10;
+                ctx.fillText(`y절편 (0, ${b}) 결속!`, interceptCanvasX + textOffsetX, interceptCanvasY - 4);
             }
 
             // 4. Target Booster Gate (xGate, yGate)
