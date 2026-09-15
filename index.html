@@ -643,6 +643,11 @@
         let lastRenderedTarget = -1;
         let showGridPlane = true;
         let enemyMiniFeedFlashTimer = 0;
+
+        window.toggleGridDisplay = function() {
+            showGridPlane = !showGridPlane;
+            const btn = document.getElementById('grid-toggle-btn');
+            if (btn) {
                 btn.innerText = showGridPlane ? "📐 좌표 격자: ON" : "📐 좌표 격자: OFF";
                 btn.className = showGridPlane 
                     ? "px-2.5 py-1 bg-slate-900/90 hover:bg-cyan-950 border border-cyan-400/60 rounded-full text-[11px] font-mono-code text-cyan-300 shadow transition active:scale-95"
@@ -781,6 +786,18 @@
                     x1: -2,
                     y1: -1,
                     x2: 1,
+                    y2: 2,
+                    deltaX: 3,
+                    deltaY: 3,
+                    xGate: 2,
+                    yGate: 3,
+                    slopeChoices: [1, 2, -1, -2],
+                    slopeCorrectIndex: 0
+                };
+            }
+            return mission;
+        }
+
         function triggerLockoutPenalty(isEmp = false, customDurationSec = 5.0) {
             if (isLockedOut) return;
             isLockedOut = true;
