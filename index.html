@@ -1,0 +1,1785 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>슬로프 라이더: 일차함수 네온 레일 레이스 - 중2 수학 4인 실시간 협동 배틀</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700;800&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Jua', 'Inter', sans-serif; }
+        .font-racing { font-family: 'Orbitron', 'Black Han Sans', sans-serif; }
+        .font-mono-code { font-family: 'JetBrains Mono', monospace; }
+        
+        .neon-grid-bg {
+            background-color: #030712;
+            background-image: 
+                linear-gradient(rgba(6, 182, 212, 0.09) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(217, 70, 239, 0.09) 1px, transparent 1px),
+                radial-gradient(circle at 50% 15%, #1e1b4b 0%, #030712 70%);
+            background-size: 32px 32px, 32px 32px, 100% 100%;
+        }
+
+        .neon-border-cyan {
+            border: 2px solid #06b6d4;
+            box-shadow: 0 0 24px rgba(6, 182, 212, 0.4), inset 0 0 16px rgba(6, 182, 212, 0.18);
+        }
+
+        .hud-corner {
+            position: relative;
+        }
+        .hud-corner::before, .hud-corner::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-color: #38bdf8;
+            pointer-events: none;
+        }
+        .hud-corner::before { top: -2px; left: -2px; border-top: 3px solid; border-left: 3px solid; }
+        .hud-corner::after { bottom: -2px; right: -2px; border-bottom: 3px solid; border-right: 3px solid; }
+
+        @keyframes turboPulse {
+            0%, 100% { filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.5)); }
+            50% { filter: drop-shadow(0 0 28px rgba(6, 182, 212, 0.95)) drop-shadow(0 0 45px rgba(217, 70, 239, 0.55)); }
+        }
+        .turbo-glow {
+            animation: turboPulse 2.4s infinite ease-in-out;
+        }
+
+        @keyframes dangerAlert {
+            from { border-color: #ef4444; background-color: rgba(239, 68, 68, 0.25); }
+            to { border-color: #f59e0b; background-color: rgba(245, 158, 11, 0.35); }
+        }
+        .danger-siren {
+            animation: dangerAlert 0.75s infinite alternate;
+        }
+
+        .neon-title-text {
+            text-shadow: 0 0 14px rgba(6, 182, 212, 0.8), 0 0 32px rgba(217, 70, 239, 0.6);
+        }
+    </style>
+</head>
+<body class="neon-grid-bg text-white min-h-screen flex flex-col justify-between p-2 md:p-5 select-none relative overflow-x-hidden">
+
+    <!-- Top Telemetry Status Bar -->
+    <div class="max-w-6xl w-full mx-auto flex items-center justify-between text-[11px] font-mono-code text-cyan-400 border-b border-cyan-500/30 pb-1.5 mb-2">
+        <div class="flex items-center gap-2">
+            <span class="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+            <span class="font-bold tracking-widest text-cyan-300">NEON_SLOPE_RADAR: ONLINE</span>
+            <span class="text-slate-600">|</span>
+            <span class="hidden sm:inline text-slate-400">LINEAR EQUATION RAIL: y = ax + b (SLOPE: Δy/Δx)</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-yellow-300 font-bold">SPARK_FREE_TIER: 100% SECURE</span>
+            <span class="px-2 py-0.5 rounded bg-cyan-950 border border-cyan-500/50 text-cyan-300">60 FPS SYNTH</span>
+        </div>
+    </div>
+
+    <!-- Header Banner -->
+    <header class="text-center mb-3">
+        <div class="flex items-center justify-center gap-3">
+            <span class="text-3xl md:text-4xl">🚄</span>
+            <h1 class="text-3xl md:text-5xl font-racing tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-200 to-fuchsia-400 neon-title-text font-black">
+                SLOPE RIDER : NEON RAIL
+            </h1>
+            <span class="text-3xl md:text-4xl">⚡</span>
+        </div>
+        <p class="text-xs md:text-sm text-cyan-300/90 mt-1 font-mono-code tracking-wide">
+            [중2 함수] 일차함수 $y = ax + b$ · 기울기 $a = \frac{\Delta y}{\Delta x}$ · $y$절편 $b$ · 4인 실시간 네온 레일 연결 질주전
+        </p>
+    </header>
+
+    <main class="max-w-6xl w-full mx-auto flex-1 flex flex-col justify-center gap-3">
+
+        <!-- 1. Lobby Screen -->
+        <div id="lobby-screen" class="bg-slate-950/90 neon-border-cyan rounded-3xl p-6 md:p-10 shadow-2xl backdrop-blur-xl hud-corner">
+            <div class="text-center mb-8">
+                <div class="inline-block px-4 py-1 rounded-full bg-cyan-950 border border-cyan-400/50 text-cyan-300 text-xs font-mono-code font-bold mb-2 tracking-widest">
+                    // HYPER-RAIL DISPATCH COMMAND //
+                </div>
+                <h2 class="text-2xl md:text-3xl font-racing text-cyan-300 mb-2">네온 라이더 엔지니어 등록</h2>
+                <p class="text-xs md:text-sm text-slate-300">
+                    배틀룸 코드를 공유한 팀원들과 팀을 결성하고, 기울기 $a$와 $y$절편 $b$로 끊어진 공중 네온 레일을 연결해 5개 서킷을 먼저 완주하세요!
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+                <div class="bg-slate-900/90 p-5 rounded-2xl border border-cyan-500/40">
+                    <label class="block text-sm font-semibold mb-2 text-cyan-300 flex items-center gap-2">
+                        <span>👤</span> 라이더 드라이버 닉네임
+                    </label>
+                    <input type="text" id="player-name" placeholder="예: 네온질주마스터 현우" maxlength="10"
+                           class="w-full px-4 py-3 rounded-xl bg-slate-950 border-2 border-slate-700 text-white font-bold text-lg focus:outline-none focus:border-cyan-400 font-mono-code">
+                </div>
+                <div class="bg-slate-900/90 p-5 rounded-2xl border border-cyan-500/40">
+                    <label class="block text-sm font-semibold mb-2 text-cyan-300 flex items-center gap-2">
+                        <span>🔑</span> 배틀룸 코드 (방 비밀번호)
+                    </label>
+                    <input type="text" id="room-code" placeholder="예: slope201" maxlength="12"
+                           class="w-full px-4 py-3 rounded-xl bg-slate-950 border-2 border-slate-700 text-white font-bold text-lg focus:outline-none focus:border-cyan-400 font-mono-code">
+                </div>
+            </div>
+
+            <!-- Team Select Buttons -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                <button onclick="joinTeam('blue')" class="group relative py-5 rounded-2xl font-racing text-xl bg-gradient-to-r from-cyan-900 to-blue-800 hover:from-cyan-800 hover:to-blue-700 transition-all duration-200 shadow-xl border-2 border-cyan-300 flex items-center justify-center gap-3 transform hover:-translate-y-1 active:scale-95">
+                    <span class="text-3xl">🔵</span>
+                    <span class="tracking-wide">알파 블루 네온 레일팀 참가</span>
+                </button>
+                <button onclick="joinTeam('red')" class="group relative py-5 rounded-2xl font-racing text-xl bg-gradient-to-r from-rose-950 to-fuchsia-900 hover:from-rose-900 hover:to-fuchsia-800 transition-all duration-200 shadow-xl border-2 border-rose-400 flex items-center justify-center gap-3 transform hover:-translate-y-1 active:scale-95">
+                    <span class="text-3xl">🔴</span>
+                    <span class="tracking-wide">오메가 레드 터보 레일팀 참가</span>
+                </button>
+            </div>
+
+            <!-- Lobby Reset Button -->
+            <div class="flex justify-center mb-4">
+                <button onclick="resetCurrentRoomData()" class="px-4 py-2 bg-rose-950/90 hover:bg-rose-900 border border-rose-500/70 rounded-xl text-xs text-rose-300 font-bold transition flex items-center gap-2 shadow font-mono-code">
+                    <span>🧹</span><span>로비 대원 명단 초기화 (유령 정리)</span>
+                </button>
+            </div>
+
+            <div id="lobby-status" class="text-center text-sm text-cyan-300 font-bold min-h-[24px]">
+                팀을 선택하면 네온 일차함수 레일웨이를 동기화하고 서킷으로 진입합니다!
+            </div>
+            
+            <div class="mt-5 text-center text-xs text-teal-300 font-mono-code font-bold">
+                🔥 클라우드 DB 연결 상태: <span id="db-status-badge">확인 중...</span>
+            </div>
+        </div>
+
+        <!-- 2. Battle Screen -->
+        <div id="battle-screen" class="hidden flex flex-col gap-3">
+            
+            <!-- Quick Reset Bar for Ghost Cleanup -->
+            <div class="flex items-center justify-between px-1">
+                <div class="flex items-center gap-2 text-xs font-mono-code text-cyan-400">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                    <span>LIVE_OPERATION // 5-CIRCUIT NEON RAILWAY RACE</span>
+                </div>
+                <button onclick="resetCurrentRoomData()" class="px-3 py-1.5 bg-rose-950/80 hover:bg-rose-900 border border-rose-500/60 rounded-xl text-xs text-rose-300 font-bold transition active:scale-95 shadow flex items-center gap-1.5 font-mono-code">
+                    <span>🧹</span><span>대원 명단 리셋 (0명 청소)</span>
+                </button>
+            </div>
+
+            <!-- 5-Circuit Race Scoreboard HUD (Blue vs Red) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-950/90 p-3.5 rounded-2xl border border-slate-800 shadow-xl hud-corner">
+                <!-- Blue Team Status -->
+                <div class="flex flex-col gap-2 p-3 rounded-xl bg-cyan-950/40 border-2 border-cyan-500/60">
+                    <div class="flex justify-between items-center text-sm font-bold">
+                        <span class="text-cyan-300 font-racing text-base md:text-lg flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></span>
+                            <span>🔵 알파 네온 레일 완주</span>
+                        </span>
+                        <span id="blue-score-text" class="text-cyan-300 font-mono-code text-base font-bold">0 / 5 서킷</span>
+                    </div>
+                    <div id="blue-targets-row" class="grid grid-cols-5 gap-1.5 text-center text-[11px] font-mono-code">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                    <div id="blue-members" class="text-xs text-cyan-200 font-mono-code truncate">크루: 대기 중...</div>
+                </div>
+
+                <!-- Red Team Status -->
+                <div class="flex flex-col gap-2 p-3 rounded-xl bg-rose-950/40 border-2 border-rose-500/60">
+                    <div class="flex justify-between items-center text-sm font-bold">
+                        <span class="text-rose-300 font-racing text-base md:text-lg flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-rose-500 shadow-[0_0_8px_#f43f5e]"></span>
+                            <span>🔴 오메가 터보 레일 완주</span>
+                        </span>
+                        <span id="red-score-text" class="text-rose-300 font-mono-code text-base font-bold">0 / 5 서킷</span>
+                    </div>
+                    <div id="red-targets-row" class="grid grid-cols-5 gap-1.5 text-center text-[11px] font-mono-code">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                    <div id="red-members" class="text-xs text-rose-200 font-mono-code truncate">크루: 대기 중...</div>
+                </div>
+            </div>
+
+            <!-- 2D High-Speed Neon Rail Canvas Arena -->
+            <div class="relative w-full h-72 md:h-88 bg-slate-950 rounded-3xl border-2 border-cyan-500/60 overflow-hidden shadow-2xl hud-corner">
+                <canvas id="rail-canvas" class="w-full h-full block cursor-crosshair"></canvas>
+                
+                <!-- Left Top Status Label -->
+                <div class="absolute top-2 left-3 px-3 py-1 bg-slate-950/90 border border-cyan-400/60 rounded-full text-xs font-mono-code text-cyan-300 z-10 flex items-center gap-2 shadow">
+                    <span class="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                    <span>RAIL_TELEMETRY //</span>
+                    <span id="rail-status-label" class="font-bold text-yellow-300">일차함수 레일 궤적 계산 대기</span>
+                </div>
+
+                <!-- Right Top Tactical Ping Help -->
+                <div class="absolute top-2 right-3 px-3 py-1 bg-slate-950/90 border border-cyan-400/60 rounded-full text-[11px] font-racing text-cyan-300 z-10 flex items-center gap-1.5 shadow">
+                    <span>👆 캔버스 터치:</span>
+                    <span class="text-yellow-300">레일 핑(Ping) 전송</span>
+                </div>
+
+                <!-- Bottom Status Ticker inside Canvas -->
+                <div class="absolute bottom-2 left-3 right-3 px-3 py-1 bg-slate-950/80 border border-slate-800 rounded-xl text-[11px] font-mono-code text-slate-400 flex items-center justify-between">
+                    <span id="canvas-status-stream">> [SYS] 레일 경사각(기울기 a) 및 y절편(b) 연립 중... 부스터 링 락온 요망</span>
+                    <span class="text-cyan-400 font-bold hidden sm:inline">LINEAR FUNCTION TRAJECTORY</span>
+                </div>
+            </div>
+
+            <!-- Cooperative 4-Step Pipeline Workspace -->
+            <div id="action-box" class="relative bg-slate-950/95 neon-border-cyan rounded-3xl p-4 md:p-6 shadow-2xl flex flex-col items-center text-center turbo-glow hud-corner">
+                
+                <!-- Electro-Static Oil Slick Overlay -->
+                <div id="slick-overlay" class="hidden absolute inset-0 rounded-3xl z-30 flex flex-col items-center justify-center p-6 text-center bg-slate-950/95 backdrop-blur-md">
+                    <span class="text-5xl animate-bounce mb-3">🛢️</span>
+                    <h4 class="text-2xl font-racing text-amber-400 mb-1">상대 카트의 전자기 오일 슬릭 살포 피격!</h4>
+                    <p class="text-sm text-slate-200 mb-4">자기부상 센서에 노이즈가 발생했습니다! 센서 와이퍼를 연속 클릭해 정화하세요!</p>
+                    <button onclick="cleanSlick()" class="px-6 py-3 bg-gradient-to-r from-cyan-400 to-teal-300 text-slate-950 font-racing text-lg rounded-xl shadow-lg active:scale-95">
+                        🧹 센서 와이퍼 가동 (<span id="slick-wipe-count">5</span>회 남음)
+                    </button>
+                </div>
+
+                <!-- 5-Second Overheat Lockout Overlay -->
+                <div id="lockout-penalty-box" class="hidden absolute inset-0 bg-slate-950/95 rounded-3xl z-40 flex flex-col items-center justify-center p-6 text-center border-4 border-rose-500 danger-siren backdrop-blur-md">
+                    <span class="text-5xl animate-bounce mb-2">⚠️</span>
+                    <h4 class="text-2xl font-racing text-rose-400 mb-1">레일 궤도 위상 왜곡! 자기부상 코일 냉각 중</h4>
+                    <p class="text-xs md:text-sm text-slate-200 mb-3">
+                        기울기 또는 절편 부호 연산 오류! 무작위 찍기를 방지하기 위해 5초간 콘솔이 잠금 처리됩니다.<br>
+                        팀원들과 $y = ax + b$ 의 기울기 $a = \frac{\Delta y}{\Delta x}$ 와 $y$절편 $b$를 다시 정밀 검산하세요!
+                    </p>
+                    <div class="px-5 py-2.5 rounded-2xl bg-rose-950 border-2 border-rose-400 font-racing text-2xl text-yellow-300 flex items-center gap-2">
+                        <span>⏳ 콘솔 복구까지:</span>
+                        <span id="lockout-timer-num" class="text-3xl font-mono text-rose-400">5.0</span>초
+                    </div>
+                </div>
+
+                <!-- Badges -->
+                <div class="flex flex-wrap items-center justify-center gap-2 mb-3">
+                    <span id="my-team-badge" class="text-xs px-3.5 py-1 rounded-full font-bold font-racing">소속 팀</span>
+                    <span id="my-role-badge" class="text-xs px-3.5 py-1 bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 rounded-full font-bold">내 포지션</span>
+                    <span id="target-ship-badge" class="text-xs px-3.5 py-1 bg-rose-500/20 text-rose-300 border border-rose-500/40 rounded-full font-bold font-mono-code">
+                        🏁 목표 서킷 : <span id="current-op-name">네온 롤러코스터 #1</span>
+                    </span>
+                </div>
+
+                <!-- Linear Function Equation Display -->
+                <div class="w-full max-w-3xl bg-slate-900/90 border-2 border-cyan-400/80 rounded-2xl p-3.5 md:p-5 shadow-inner mb-3 hud-corner">
+                    <div class="text-xs font-semibold text-cyan-300 mb-1.5 tracking-wider uppercase flex items-center justify-between px-2 font-mono-code">
+                        <span>[LINEAR EQUATION TELEMETRY // NEON RAIL PARAMETERS]</span>
+                        <span id="rail-formula-type" class="text-teal-300">RAIL: y = ax + b</span>
+                    </div>
+                    <div id="equation-clue-display" class="text-lg md:text-2xl font-racing text-yellow-300 tracking-wide font-mono-code py-1 leading-relaxed">
+                        레일 궤적 제원 수신 중...
+                    </div>
+                </div>
+
+                <!-- Rail Formula Assembly Puzzle HUD -->
+                <div class="w-full max-w-2xl bg-slate-900/70 border border-cyan-500/40 rounded-xl p-2.5 mb-3 text-xs font-mono-code">
+                    <div class="text-slate-400 text-[11px] mb-1.5 flex items-center justify-center gap-1">
+                        <span>🧩</span><span>네온 레일 조립기 : 기울기 a ➔ y절편 b ➔ 부스터 링 y 산출 ➔ 점화!</span>
+                    </div>
+                    <div class="flex items-center justify-center gap-2 text-sm md:text-base font-bold">
+                        <span class="text-cyan-300">y =</span>
+                        <span id="slot-a" class="px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-400 font-bold transition-all">
+                            기울기 a
+                        </span>
+                        <span class="text-slate-300">x +</span>
+                        <span id="slot-b" class="px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-400 font-bold transition-all">
+                            y절편 b
+                        </span>
+                        <span class="text-slate-400 mx-1">➔</span>
+                        <div id="slot-target" class="px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-400 font-bold transition-all">
+                            게이트 (x, y) 락온 대기
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Controls -->
+                <div class="w-full max-w-xl flex flex-col items-center gap-2.5">
+                    <div id="step-instruction" class="text-sm md:text-base font-bold text-cyan-200 min-h-[40px] flex items-center justify-center px-2">
+                        단계 안내 로딩 중...
+                    </div>
+
+                    <!-- Step 0: Slope a Multiple Choice Buttons (4 Choices) -->
+                    <div id="slope-choice-control" class="hidden grid grid-cols-2 gap-2.5 w-full max-w-md">
+                        <button id="slope-btn-0" onclick="submitSlopeStep(0)" class="p-3 bg-slate-900 hover:bg-cyan-950 border-2 border-cyan-400 rounded-xl font-racing text-lg text-cyan-200 transition active:scale-95 shadow">
+                            a = 1
+                        </button>
+                        <button id="slope-btn-1" onclick="submitSlopeStep(1)" class="p-3 bg-slate-900 hover:bg-cyan-950 border-2 border-cyan-400 rounded-xl font-racing text-lg text-cyan-200 transition active:scale-95 shadow">
+                            a = 2
+                        </button>
+                        <button id="slope-btn-2" onclick="submitSlopeStep(2)" class="p-3 bg-slate-900 hover:bg-cyan-950 border-2 border-cyan-400 rounded-xl font-racing text-lg text-cyan-200 transition active:scale-95 shadow">
+                            a = -1
+                        </button>
+                        <button id="slope-btn-3" onclick="submitSlopeStep(3)" class="p-3 bg-slate-900 hover:bg-cyan-950 border-2 border-cyan-400 rounded-xl font-racing text-lg text-cyan-200 transition active:scale-95 shadow">
+                            a = -2
+                        </button>
+                    </div>
+
+                    <!-- Step 1 & 2: Number Input Mode -->
+                    <div id="number-input-control" class="hidden flex flex-col sm:flex-row items-center justify-center gap-2 w-full max-w-md">
+                        <input type="text" inputmode="numeric" id="step-number-input" placeholder="정답 숫자 입력" 
+                               class="w-full sm:w-48 px-4 py-3 rounded-xl bg-slate-900 border-2 border-cyan-400 text-white font-bold text-xl text-center focus:outline-none focus:ring-2 focus:ring-cyan-300 font-mono-code"
+                               onkeydown="if(event.key==='Enter') submitNumberStep()">
+                        <button id="submit-step-btn" onclick="submitNumberStep()" 
+                                class="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-cyan-400 to-teal-400 hover:from-cyan-300 hover:to-teal-300 text-slate-950 font-racing text-base md:text-lg rounded-xl transition shadow-lg flex items-center justify-center gap-1.5 active:scale-95">
+                            <span>📡</span><span>레일 제원 전송</span>
+                        </button>
+                    </div>
+
+                    <!-- Step 3 Fire Button (Opens Payload Modal) -->
+                    <div id="fire-rail-control" class="hidden flex flex-col items-center gap-2 w-full max-w-md">
+                        <button onclick="openBoosterModal()" class="w-full py-4 bg-gradient-to-r from-cyan-500 via-sky-500 to-fuchsia-500 hover:from-cyan-400 hover:to-fuchsia-400 text-slate-950 font-racing text-xl md:text-2xl rounded-2xl shadow-xl border-2 border-white active:scale-95 transition animate-pulse flex items-center justify-center gap-2">
+                            <span>🚀</span><span>초광속 부스터 점화 & 서킷 돌파! (BOOST! ⚡)</span>
+                        </button>
+                        <span class="text-xs text-yellow-200 font-semibold font-mono-code">> 네온 레일 100% 완전 연결 완료! 전술 부스터를 선택해 서킷을 질주하세요!</span>
+                    </div>
+
+                    <!-- Waiting Notice for Team Members -->
+                    <div id="waiting-notice" class="hidden p-3 rounded-xl bg-slate-950/80 border border-slate-700 text-xs md:text-sm text-cyan-200 font-mono-code">
+                        ⏳ 현재 <span id="current-actor-name" class="font-bold text-yellow-300"></span> 엔지니어가 레일을 조립 중입니다. 캔버스를 터치하여 레일 핑을 보내세요!
+                    </div>
+                </div>
+
+                <!-- 4-Stage Pipeline Tracker Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full max-w-3xl mt-4 pt-3 border-t border-slate-800 text-xs font-semibold font-mono-code">
+                    <div id="stage-card-0" class="p-2.5 rounded-xl border transition-all text-slate-400 bg-slate-900/60 border-slate-800">
+                        ① 기울기 경사 분석
+                    </div>
+                    <div id="stage-card-1" class="p-2.5 rounded-xl border transition-all text-slate-400 bg-slate-900/60 border-slate-800">
+                        ② y절편 게이트 락온
+                    </div>
+                    <div id="stage-card-2" class="p-2.5 rounded-xl border transition-all text-slate-400 bg-slate-900/60 border-slate-800">
+                        ③ 통과 좌표(y) 계산
+                    </div>
+                    <div id="stage-card-3" class="p-2.5 rounded-xl border transition-all text-slate-400 bg-slate-900/60 border-slate-800">
+                        ④ 부스터 점화 질주 🚀
+                    </div>
+                </div>
+
+                <!-- Feedback & Radio -->
+                <div id="battle-feedback" class="text-sm font-bold min-h-[24px] mt-2 font-mono-code"></div>
+
+                <div class="flex flex-wrap items-center justify-center gap-2 mt-2">
+                    <button onclick="sendQuickCheer('기울기는 x증가량 분의 y증가량! 📐')" class="px-3 py-1 bg-slate-900 hover:bg-slate-800 border border-cyan-500/40 rounded-lg text-xs text-cyan-200 font-mono-code">
+                        📐 기울기 = Δy / Δx!
+                    </button>
+                    <button onclick="sendQuickCheer('y절편은 x=0일 때 y값이야! 💡')" class="px-3 py-1 bg-slate-900 hover:bg-slate-800 border border-cyan-500/40 rounded-lg text-xs text-cyan-200 font-mono-code">
+                        💡 y절편은 (0, b)!
+                    </button>
+                    <button onclick="sendQuickCheer('완성된 식에 x를 대입해서 y를 찾아! 🎯')" class="px-3 py-1 bg-slate-900 hover:bg-slate-800 border border-cyan-500/40 rounded-lg text-xs text-cyan-200 font-mono-code">
+                        🎯 식에 x 대입해 y 계산!
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Tactical Booster Selection Modal -->
+    <div id="payload-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-slate-900 border-4 border-cyan-400 rounded-3xl p-6 md:p-8 max-w-xl w-full text-center shadow-[0_0_50px_rgba(6,182,212,0.4)] hud-corner">
+            <div class="text-5xl mb-2">⚡</div>
+            <h4 class="text-2xl md:text-3xl font-racing text-cyan-300 mb-1">4단계: 전술 부스터 선택</h4>
+            <p class="text-xs text-slate-300 mb-5">
+                네온 레일 연결 100% 완료! 자기부상 카트를 음속으로 질주시키고 상대 팀에 전술 효과를 발동하세요!
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                <!-- Tactical 1: Hyper Nitro -->
+                <button onclick="choosePayload('hyper_nitro')" class="group p-4 rounded-2xl bg-gradient-to-b from-cyan-950/90 to-slate-950 border-2 border-cyan-400 hover:border-yellow-300 flex flex-col items-center gap-2 transition hover:scale-105 active:scale-95 shadow-xl">
+                    <span class="text-4xl">🚀</span>
+                    <span class="font-racing text-base text-cyan-300">하이퍼 니트로</span>
+                    <span class="text-[11px] text-slate-300 leading-tight">순수 화력으로 서킷 돌파<br><b class="text-yellow-300">서킷 즉시 완주 (+1점)</b></span>
+                </button>
+
+                <!-- Tactical 2: Electro Slick -->
+                <button onclick="choosePayload('electro_slick')" class="group p-4 rounded-2xl bg-gradient-to-b from-purple-950/90 to-slate-950 border-2 border-purple-500 hover:border-yellow-300 flex flex-col items-center gap-2 transition hover:scale-105 active:scale-95 shadow-xl">
+                    <span class="text-4xl">🛢️</span>
+                    <span class="font-racing text-base text-purple-300">전자기 슬릭탄</span>
+                    <span class="text-[11px] text-slate-300 leading-tight">상대 센서에 오일 슬릭 살포<br><b class="text-purple-300">완주 + 적 5회 정화</b></span>
+                </button>
+
+                <!-- Tactical 3: Quantum Warp -->
+                <button onclick="choosePayload('quantum_warp')" class="group p-4 rounded-2xl bg-gradient-to-b from-fuchsia-950/90 to-slate-950 border-2 border-fuchsia-400 hover:border-white flex flex-col items-center gap-2 transition hover:scale-105 active:scale-95 shadow-xl">
+                    <span class="text-4xl">✨</span>
+                    <span class="font-racing text-base text-fuchsia-300">양자 도약 펄스</span>
+                    <span class="text-[11px] text-slate-300 leading-tight">광속 입자 가속 질주<br><b class="text-yellow-300">초고속 즉시 완주 (+1점)</b></span>
+                </button>
+            </div>
+
+            <button onclick="document.getElementById('payload-modal').classList.add('hidden')" class="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl font-mono-code">
+                닫기
+            </button>
+        </div>
+    </div>
+
+    <!-- Generic Custom Modal -->
+    <div id="custom-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-slate-900 border-2 border-cyan-400 rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl hud-corner">
+            <h4 id="modal-title" class="text-2xl font-racing text-cyan-300 mb-2">레이스 관제탑 통신</h4>
+            <p id="modal-body" class="text-sm text-slate-200 mb-6">내용</p>
+            <button onclick="closeCustomModal()" class="bg-gradient-to-r from-cyan-400 to-teal-500 text-slate-950 font-racing px-6 py-2.5 rounded-xl transition shadow-lg hover:scale-105">
+                확인
+            </button>
+        </div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victory-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-xl hidden flex items-center justify-center z-50 p-4">
+        <div class="relative bg-gradient-to-b from-slate-900 via-cyan-950 to-slate-950 border-4 border-cyan-400 rounded-3xl p-6 md:p-8 max-w-lg w-full text-center shadow-[0_0_60px_rgba(6,182,212,0.6)] overflow-hidden hud-corner">
+            <div class="text-6xl md:text-7xl mb-2">🏆</div>
+            <div class="inline-block px-4 py-1 rounded-full bg-cyan-400 text-slate-950 font-racing text-xs tracking-wider mb-2">
+                ⚡ SLOPE RIDER GRAND CHAMPION
+            </div>
+            <h3 id="victory-team-title" class="text-3xl md:text-4xl font-racing text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-200 to-yellow-300 mb-3">
+                알파 네온 레일팀 완승!
+            </h3>
+            <p id="victory-desc" class="text-xs md:text-sm text-cyan-200 mb-5 leading-relaxed">
+                5개의 험난한 네온 서킷을 완벽한 일차함수 기울기 $a$와 $y$절편 $b$ 연산으로 먼저 모두 연결해 체커기를 갈랐습니다!
+            </p>
+
+            <div class="bg-slate-950/80 border border-slate-700 rounded-2xl p-4 mb-6 text-left">
+                <div class="text-xs text-yellow-300 font-bold mb-2 flex items-center gap-1.5">
+                    <span>👑</span> 챔피언 네온 라이더 크루
+                </div>
+                <div id="victory-members-list" class="text-sm font-bold text-white mb-3 font-mono-code">
+                    대원 목록
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-center text-xs font-racing border-t border-slate-800 pt-3">
+                    <div class="bg-slate-900/80 p-2 rounded-xl">
+                        <span class="text-slate-400 block text-[10px]">서킷 완주 결과</span>
+                        <span class="text-cyan-300 text-sm">5 / 5 전 코스 클리어</span>
+                    </div>
+                    <div class="bg-slate-900/80 p-2 rounded-xl">
+                        <span class="text-slate-400 block text-[10px]">작전 수행 타임</span>
+                        <span id="victory-total-time" class="text-yellow-300 text-sm font-mono-code">00.0초</span>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="location.reload()" class="w-full py-4 bg-gradient-to-r from-cyan-400 via-sky-400 to-yellow-400 hover:from-cyan-300 hover:to-sky-300 text-slate-950 font-racing text-lg rounded-2xl shadow-xl transform active:scale-95 transition">
+                ⚡ 새로운 네온 서킷 재도전
+            </button>
+        </div>
+    </div>
+
+    <!-- Web Audio API Sound Synthesizer -->
+    <script>
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+            }
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) this.ctx = new AudioContext();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+            playTone(freq, type, duration, gainVal = 0.15) {
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch (e) {}
+            }
+            radarPing() {
+                this.init();
+                this.playTone(880, 'sine', 0.15, 0.2);
+                setTimeout(() => this.playTone(1320, 'sine', 0.25, 0.18), 70);
+            }
+            tacticalPing() {
+                this.init();
+                this.playTone(660, 'sine', 0.15, 0.2);
+                setTimeout(() => this.playTone(990, 'triangle', 0.25, 0.2), 50);
+            }
+            railConnect() {
+                this.init();
+                this.playTone(440, 'triangle', 0.15, 0.3);
+                setTimeout(() => this.playTone(660, 'sine', 0.2, 0.25), 60);
+                setTimeout(() => this.playTone(880, 'sine', 0.3, 0.2), 120);
+            }
+            boosterBlast() {
+                this.init();
+                this.playTone(180, 'sawtooth', 0.2, 0.45);
+                setTimeout(() => this.playTone(280, 'sawtooth', 0.35, 0.4), 40);
+                setTimeout(() => this.playTone(560, 'triangle', 0.5, 0.35), 90);
+            }
+            unlockChirp() {
+                this.init();
+                this.playTone(523.25, 'triangle', 0.12, 0.2);
+                setTimeout(() => this.playTone(783.99, 'sine', 0.2, 0.25), 70);
+                setTimeout(() => this.playTone(1046.50, 'sine', 0.3, 0.2), 140);
+            }
+            success() {
+                this.init();
+                this.playTone(587.33, 'triangle', 0.15, 0.2);
+                setTimeout(() => this.playTone(880.00, 'triangle', 0.25, 0.25), 90);
+            }
+            error() {
+                this.init();
+                this.playTone(190, 'sawtooth', 0.2, 0.25);
+                setTimeout(() => this.playTone(140, 'sawtooth', 0.25, 0.25), 90);
+            }
+            victoryFanfare() {
+                this.init();
+                const notes = [
+                    { f: 523.25, d: 0.18 },
+                    { f: 659.25, d: 0.18 },
+                    { f: 783.99, d: 0.22 },
+                    { f: 1046.50, d: 0.5 },
+                    { f: 783.99, d: 0.18 },
+                    { f: 1046.50, d: 0.8 }
+                ];
+                let delay = 0;
+                notes.forEach(n => {
+                    setTimeout(() => this.playTone(n.f, 'triangle', n.d, 0.3), delay);
+                    delay += n.d * 1000 + 40;
+                });
+            }
+        }
+        const sfx = new SoundFX();
+    </script>
+
+    <!-- Main Game Logic and Firebase Synchronizer -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyChxrOzoTxFMy_BvkvNZLXAp1oRvN7Fb1g",
+            authDomain: "focus-tower-defense.firebaseapp.com",
+            projectId: "focus-tower-defense",
+            storageBucket: "focus-tower-defense.firebasestorage.app",
+            messagingSenderId: "519329169002",
+            appId: "1:519329169002:web:401534fe04b6ad39131413",
+            measurementId: "G-G2JRKQ2KXY"
+        };
+
+        let db = null;
+        let useFallback = false;
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            const badge = document.getElementById('db-status-badge');
+            if (badge) {
+                badge.innerText = "🟢 클라우드 DB 정상 연결!";
+                badge.className = "text-cyan-400 font-bold font-mono-code";
+            }
+        } catch (e) {
+            useFallback = false;
+            const badge = document.getElementById('db-status-badge');
+            if (badge) {
+                badge.innerText = "🟢 클라우드 DB 연결 (직접 모드)";
+                badge.className = "text-cyan-400 font-bold font-mono-code";
+            }
+        }
+
+        let currentUserName = '';
+        let currentRoomCode = '';
+        let myTeam = '';
+        let myPlayerId = 'p_' + Math.random().toString(36).substring(2, 9);
+        const myJoinedAt = Date.now();
+        let unsubscribeRoom = null;
+        let lastKnownRoomData = null;
+        let bc = null;
+        let lastPingSentTime = 0;
+
+        let missionStartTime = Date.now();
+        let prevWasMyTurn = false;
+        let battleEnded = false;
+        let isLockedOut = false;
+        let lockoutTimerInterval = null;
+        const recentProblemsSet = new Set();
+        let slickWipesRemaining = 5;
+        let lastRenderedStage = -1;
+        let lastRenderedTarget = -1;
+
+        /*
+           중2 수학 핵심: 일차함수 레일웨이 생성기
+           - 식: y = ax + b
+           - 기울기 a = Δy / Δx (양수 또는 음수 정수)
+           - y절편 b: (0, b) 통과점
+           - 목표 통과 게이트: (x_gate, y_gate) where y_gate = a * x_gate + b
+           - 4단계 인터락:
+             Step 0: 기울기 a 판별 (4선다 객관식 버튼)
+             Step 1: y절편 b 락온 (정수 숫자 입력)
+             Step 2: 목표 부스터 링 y좌표 계산 (정수 숫자 입력)
+             Step 3: 슈퍼 부스터 점화 (BOOST! 🚀)
+        */
+        function generateLinearRailMission(trackIndex = 1) {
+            let mission = null;
+            let attempts = 0;
+
+            while (attempts < 140) {
+                attempts++;
+                const aPool = [1, 2, 3, -1, -2, -3];
+                const a = aPool[Math.floor(Math.random() * aPool.length)];
+                const b = Math.floor(Math.random() * 9) - 4; // -4 to 4
+
+                // Target Gate point (x_gate != 0)
+                let xGate = Math.floor(Math.random() * 7) - 3; // -3 to 3
+                if (xGate === 0) xGate = a > 0 ? 2 : -2;
+                const yGate = a * xGate + b;
+
+                // Restrict yGate within -8 to 8 for neat visualization
+                if (Math.abs(yGate) > 8) continue;
+
+                // Equation text
+                let eqStr = "y = ";
+                if (a === 1) eqStr += "x";
+                else if (a === -1) eqStr += "-x";
+                else eqStr += `${a}x`;
+
+                if (b > 0) eqStr += ` + ${b}`;
+                else if (b < 0) eqStr += ` - ${Math.abs(b)}`;
+
+                // Generate two sample points for slope clue
+                const p1x = 1, p1y = a * p1x + b;
+                const p2x = 3, p2y = a * p2x + b;
+                const deltaX = p2x - p1x;
+                const deltaY = p2y - p1y;
+
+                let clueType = Math.floor(Math.random() * 3);
+                let clueText = "";
+                if (clueType === 0) {
+                    clueText = `x가 [${deltaX}] 만큼 증가할 때 y는 [${deltaY >= 0 ? '+' + deltaY : deltaY}] 만큼 변화하고, y절편이 [ ${b} ] 인 네온 레일!`;
+                } else if (clueType === 1) {
+                    clueText = `두 점 (${p1x}, ${p1y})과 (${p2x}, ${p2y})를 통과하는 공중 네온 레일 궤적!`;
+                } else {
+                    clueText = `y절편이 (${0}, ${b})이고, x증가량 분의 y증가량이 [ ${a} ] 인 하이퍼 레일웨이!`;
+                }
+
+                // 4 Choices for slope a
+                const wrongSlopes = [-3, -2, -1, 1, 2, 3].filter(val => val !== a);
+                for (let i = wrongSlopes.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [wrongSlopes[i], wrongSlopes[j]] = [wrongSlopes[j], wrongSlopes[i]];
+                }
+                const slopeChoices = [a, wrongSlopes[0], wrongSlopes[1], wrongSlopes[2]];
+                for (let i = slopeChoices.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [slopeChoices[i], slopeChoices[j]] = [slopeChoices[j], slopeChoices[i]];
+                }
+                const slopeCorrectIndex = slopeChoices.indexOf(a);
+
+                if (!recentProblemsSet.has(eqStr) || attempts > 110) {
+                    recentProblemsSet.add(eqStr);
+                    if (recentProblemsSet.size > 30) {
+                        const first = recentProblemsSet.values().next().value;
+                        recentProblemsSet.delete(first);
+                    }
+
+                    mission = {
+                        trackIndex: trackIndex,
+                        trackName: `네온 하이퍼 서킷 #${trackIndex}`,
+                        a: a,
+                        b: b,
+                        eqStr: eqStr,
+                        clueText: clueText,
+                        xGate: xGate,
+                        yGate: yGate,
+                        slopeChoices: slopeChoices,
+                        slopeCorrectIndex: slopeCorrectIndex
+                    };
+                    break;
+                }
+            }
+
+            if (!mission) {
+                mission = {
+                    trackIndex: 1,
+                    trackName: "네온 하이퍼 서킷 #1",
+                    a: 2,
+                    b: 1,
+                    eqStr: "y = 2x + 1",
+                    clueText: "x가 2만큼 증가할 때 y는 4만큼 증가하고, 점 (0, 1)을 지나는 네온 레일!",
+                    xGate: 2,
+                    yGate: 5,
+                    slopeChoices: [2, -2, 1, -1],
+                    slopeCorrectIndex: 0
+                };
+            }
+            return mission;
+        }
+
+        function triggerLockoutPenalty() {
+            if (isLockedOut) return;
+            isLockedOut = true;
+            sfx.error();
+
+            const lockoutBox = document.getElementById('lockout-penalty-box');
+            const timerEl = document.getElementById('lockout-timer-num');
+            lockoutBox.classList.remove('hidden');
+            timerEl.innerText = '5.0';
+
+            if (lockoutTimerInterval) clearInterval(lockoutTimerInterval);
+            const startAt = Date.now();
+
+            lockoutTimerInterval = setInterval(() => {
+                const elapsed = Date.now() - startAt;
+                const left = Math.max(0, (5000 - elapsed) / 1000);
+                timerEl.innerText = left.toFixed(1);
+
+                if (left <= 0) {
+                    clearInterval(lockoutTimerInterval);
+                    lockoutTimerInterval = null;
+                    isLockedOut = false;
+                    lockoutBox.classList.add('hidden');
+                    sfx.playTone(520, 'sine', 0.15, 0.2);
+                    showStepFeedback("⚡ [코일 냉각 완료] 레일 조립 콘솔이 정상 복구되었습니다. 신중하게 입력하세요!", false);
+                }
+            }, 100);
+        }
+
+        function cleanMemberList(members = []) {
+            const map = new Map();
+            members.forEach(item => {
+                if (!item) return;
+                const id = item.id || item.name;
+                const name = item.name || item.id || '라이더';
+                const joinedAt = item.joinedAt || Date.now();
+                const lastSeen = item.lastSeen || Date.now();
+                
+                if (!map.has(id)) {
+                    map.set(id, { id, name, joinedAt, lastSeen });
+                }
+            });
+            return Array.from(map.values()).sort((a, b) => 
+                (a.joinedAt || 0) !== (b.joinedAt || 0) ? (a.joinedAt || 0) - (b.joinedAt || 0) : a.name.localeCompare(b.name)
+            );
+        }
+
+        function getStageActorIndex(stage, teamSize, problemCount = 1) {
+            if (teamSize <= 1) return 0;
+            const shift = (Math.max(1, problemCount) - 1) % teamSize;
+            return (stage + shift) % teamSize;
+        }
+
+        function getRoleDescription(memberIndex, teamSize, problemCount = 1) {
+            if (teamSize <= 1) return "올라운드 치프 라이더 (전 구간 단독 조립/부스터)";
+            const stageNames = [
+                "① 기울기 경사 분석관",
+                "② y절편 게이트 조준사",
+                "③ 부스터 게이트 검증관",
+                "④ 네온 부스터 점화관 🚀"
+            ];
+            const myAssignedStages = [];
+            for (let s = 0; s < 4; s++) {
+                if (getStageActorIndex(s, teamSize, problemCount) === memberIndex) {
+                    myAssignedStages.push(stageNames[s]);
+                }
+            }
+            return `${memberIndex + 1}번 라이더 [${myAssignedStages.join(' + ')}]`;
+        }
+
+        function createInitialRoomData() {
+            return {
+                blueKills: 0,
+                redKills: 0,
+                blueMembers: [],
+                redMembers: [],
+                blueStage: 0,
+                redStage: 0,
+                blueMission: generateLinearRailMission(1),
+                redMission: generateLinearRailMission(1),
+                lastBoost: null,
+                lastPing: null,
+                slickTarget: null,
+                slickId: 0,
+                updatedAt: Date.now()
+            };
+        }
+
+        window.joinTeam = async function(team) {
+            const name = document.getElementById('player-name').value.trim() || `라이더_${Math.floor(Math.random()*900+100)}`;
+            const code = document.getElementById('room-code').value.trim() || 'slope201';
+
+            currentUserName = name;
+            currentRoomCode = code;
+            myTeam = team;
+
+            const myMemberObj = { id: myPlayerId, name: currentUserName, lastSeen: Date.now(), joinedAt: myJoinedAt };
+
+            // Local BroadcastChannel for free zero-cost peer ping synchronization
+            try {
+                if (window.BroadcastChannel) {
+                    if (bc) bc.close();
+                    bc = new BroadcastChannel(`slope_rider_${currentRoomCode}`);
+                    bc.onmessage = (event) => {
+                        const msg = event.data;
+                        if (!msg) return;
+                        if (msg.type === 'LOCAL_PING' && msg.team === myTeam) {
+                            addTacticalPingCoords(msg.x, msg.y, msg.sender);
+                        }
+                    };
+                }
+            } catch (e) {}
+
+            document.getElementById('lobby-screen').classList.add('hidden');
+            document.getElementById('battle-screen').classList.remove('hidden');
+            initRailCanvas();
+            sfx.radarPing();
+
+            let initialData = createInitialRoomData();
+            if (team === 'blue') initialData.blueMembers = [myMemberObj];
+            else initialData.redMembers = [myMemberObj];
+            applyRoomState(initialData);
+
+            // One-time registration upon join to Firestore root collection
+            try {
+                if (db) {
+                    const roomRef = doc(db, 'slope_rider_rooms', currentRoomCode);
+                    startFirestoreListener(roomRef);
+
+                    const snap = await getDoc(roomRef);
+                    let currentData = snap.exists() ? snap.data() : createInitialRoomData();
+                    const listKey = team === 'blue' ? 'blueMembers' : 'redMembers';
+                    let currentList = currentData[listKey] || [];
+                    currentList = currentList.filter(m => (m.id || m.name) !== myPlayerId);
+                    currentList.push(myMemberObj);
+                    currentData[listKey] = cleanMemberList(currentList);
+                    currentData.updatedAt = Date.now();
+
+                    await setDoc(roomRef, currentData, { merge: true });
+                }
+            } catch (err) {
+                console.warn("Slope rider join error:", err);
+            }
+
+            window.addEventListener('beforeunload', leaveRoomCleanup);
+        };
+
+        async function leaveRoomCleanup() {
+            if (!currentRoomCode || !myTeam || !db) return;
+            try {
+                const roomRef = doc(db, 'slope_rider_rooms', currentRoomCode);
+                const snap = await getDoc(roomRef);
+                if (snap.exists()) {
+                    const data = snap.data();
+                    const listKey = myTeam === 'blue' ? 'blueMembers' : 'redMembers';
+                    const filtered = (data[listKey] || []).filter(m => (m.id || m.name) !== myPlayerId);
+                    await updateDoc(roomRef, { [listKey]: filtered, updatedAt: Date.now() });
+                }
+            } catch (e) {}
+        }
+
+        window.resetCurrentRoomData = async function() {
+            const code = currentRoomCode || document.getElementById('room-code').value.trim() || 'slope201';
+            const fresh = createInitialRoomData();
+            const myMemberObj = { id: myPlayerId, name: currentUserName || '라이더', lastSeen: Date.now(), joinedAt: myJoinedAt };
+            if (myTeam === 'blue') fresh.blueMembers = [myMemberObj];
+            else if (myTeam === 'red') fresh.redMembers = [myMemberObj];
+
+            try {
+                if (db) {
+                    const roomRef = doc(db, 'slope_rider_rooms', code);
+                    await setDoc(roomRef, fresh);
+                }
+            } catch (e) {}
+            applyRoomState(fresh);
+            showCustomModal("초기화 완료", "네온 레일 라이더 명단과 서킷 스코어가 깨끗하게 리셋되었습니다!");
+        };
+
+        function startFirestoreListener(roomRef) {
+            if (unsubscribeRoom) unsubscribeRoom();
+            unsubscribeRoom = onSnapshot(roomRef, (snap) => {
+                if (!snap.exists()) return;
+                applyRoomState(snap.data());
+            }, (err) => {
+                console.warn("Snapshot error:", err);
+            });
+        }
+
+        function applyRoomState(data) {
+            if (!data) return;
+
+            data.blueMembers = cleanMemberList(data.blueMembers || []);
+            data.redMembers = cleanMemberList(data.redMembers || []);
+            lastKnownRoomData = data;
+
+            if (data.lastBoost && (!window.lastObservedBoostId || window.lastObservedBoostId !== data.lastBoost.id)) {
+                window.lastObservedBoostId = data.lastBoost.id;
+                triggerKartBoosterSprint(data.lastBoost.fromTeam, data.lastBoost.a, data.lastBoost.b, data.lastBoost.payloadType);
+            }
+
+            if (data.lastPing && (!window.lastObservedPingId || window.lastObservedPingId !== data.lastPing.id)) {
+                window.lastObservedPingId = data.lastPing.id;
+                if (data.lastPing.team === myTeam) {
+                    addTacticalPingCoords(data.lastPing.x, data.lastPing.y, data.lastPing.sender);
+                }
+            }
+
+            if (data.slickTarget === myTeam && (!window.lastObservedSlickId || window.lastObservedSlickId !== data.slickId)) {
+                window.lastObservedSlickId = data.slickId;
+                activateSlickCover();
+            }
+
+            updateRaceScoreboard(data.blueKills || 0, data.redKills || 0);
+
+            const bMembers = (data.blueMembers || []).map(m => m.name || m);
+            const rMembers = (data.redMembers || []).map(m => m.name || m);
+            document.getElementById('blue-members').innerText = `크루(${bMembers.length}명): ${bMembers.join(', ') || '대기 중'}`;
+            document.getElementById('red-members').innerText = `크루(${rMembers.length}명): ${rMembers.join(', ') || '대기 중'}`;
+
+            updatePipelineUI(data);
+
+            if (((data.blueKills || 0) >= 5 || (data.redKills || 0) >= 5) && !battleEnded) {
+                battleEnded = true;
+                const winnerTeam = (data.blueKills || 0) >= 5 ? 'blue' : 'red';
+                triggerGrandVictory(winnerTeam, data);
+            }
+        }
+
+        async function syncStateUpdate(nextData) {
+            applyRoomState(nextData);
+            if (!useFallback && db) {
+                try {
+                    const roomRef = doc(db, 'slope_rider_rooms', currentRoomCode);
+                    await updateDoc(roomRef, nextData);
+                } catch (e) {
+                    useFallback = true;
+                }
+            }
+        }
+
+        function updateRaceScoreboard(blueKills, redKills) {
+            const bK = Math.min(5, Math.max(0, blueKills));
+            const rK = Math.min(5, Math.max(0, redKills));
+
+            document.getElementById('blue-score-text').innerText = `${bK} / 5 서킷 완주`;
+            document.getElementById('red-score-text').innerText = `${rK} / 5 서킷 완주`;
+
+            const bRow = document.getElementById('blue-targets-row');
+            const rRow = document.getElementById('red-targets-row');
+            bRow.innerHTML = '';
+            rRow.innerHTML = '';
+
+            for (let i = 0; i < 5; i++) {
+                const targetNum = i + 1;
+                // Blue badge
+                const isBlueDone = i < bK;
+                const isBlueActive = i === bK;
+                bRow.innerHTML += `
+                    <div class="p-1 rounded-lg border flex flex-col items-center ${
+                        isBlueDone 
+                            ? 'bg-cyan-950/80 border-cyan-400 text-cyan-300 shadow-[0_0_6px_#22d3ee]' 
+                            : (isBlueActive 
+                                ? 'bg-amber-950/80 border-amber-400 text-amber-300 animate-pulse font-bold' 
+                                : 'bg-slate-900/50 border-slate-800 text-slate-600')
+                    }">
+                        <span class="text-xs">🚄</span>
+                        <span class="text-[9px] truncate w-full">${targetNum}코스</span>
+                    </div>
+                `;
+
+                // Red badge
+                const isRedDone = i < rK;
+                const isRedActive = i === rK;
+                rRow.innerHTML += `
+                    <div class="p-1 rounded-lg border flex flex-col items-center ${
+                        isRedDone 
+                            ? 'bg-rose-950/80 border-rose-400 text-rose-300 shadow-[0_0_6px_#fb7185]' 
+                            : (isRedActive 
+                                ? 'bg-amber-950/80 border-amber-400 text-amber-300 animate-pulse font-bold' 
+                                : 'bg-slate-900/50 border-slate-800 text-slate-600')
+                    }">
+                        <span class="text-xs">🚄</span>
+                        <span class="text-[9px] truncate w-full">${targetNum}코스</span>
+                    </div>
+                `;
+            }
+        }
+
+        function updatePipelineUI(data) {
+            const team = myTeam;
+            const myRawMembers = team === 'blue' ? (data.blueMembers || []) : (data.redMembers || []);
+            const myMembers = cleanMemberList(myRawMembers);
+            const currentStage = team === 'blue' ? (data.blueStage || 0) : (data.redStage || 0);
+            const currentMission = team === 'blue' ? data.blueMission : data.redMission;
+            const kills = team === 'blue' ? (data.blueKills || 0) : (data.redKills || 0);
+            const targetNum = Math.min(5, kills + 1);
+
+            if (!currentMission) return;
+
+            document.getElementById('equation-clue-display').innerText = currentMission.clueText;
+            document.getElementById('current-op-name').innerText = `네온 서킷 #${targetNum}`;
+
+            // Update Assembly Slots
+            const slotA = document.getElementById('slot-a');
+            const slotB = document.getElementById('slot-b');
+            const slotTarget = document.getElementById('slot-target');
+
+            if (currentStage >= 1) {
+                slotA.innerHTML = `<span class="text-cyan-300 font-bold">기울기 a = ${currentMission.a} 확정</span>`;
+                slotA.className = "px-2.5 py-1 rounded bg-cyan-950/80 border border-cyan-400 text-cyan-300 font-bold shadow-[0_0_8px_#22d3ee]";
+            } else {
+                slotA.innerText = "기울기 a";
+                slotA.className = "px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-400 font-bold";
+            }
+
+            if (currentStage >= 2) {
+                slotB.innerHTML = `<span class="text-yellow-300 font-bold">y절편 b = ${currentMission.b}</span>`;
+                slotB.className = "px-2.5 py-1 rounded bg-amber-950/80 border border-yellow-400 text-yellow-300 font-bold shadow-[0_0_8px_#f59e0b]";
+            } else {
+                slotB.innerText = "y절편 b";
+                slotB.className = "px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-400 font-bold";
+            }
+
+            if (currentStage >= 3) {
+                slotTarget.innerHTML = `<span class="text-fuchsia-300 font-bold">부스터 링 (${currentMission.xGate}, ${currentMission.yGate}) 락온!</span>`;
+                slotTarget.className = "px-2.5 py-1 rounded bg-fuchsia-950 border-2 border-fuchsia-400 text-fuchsia-300 font-bold shadow-[0_0_12px_#e879f9] animate-pulse";
+            } else {
+                slotTarget.innerText = "게이트 (x, y) 락온 대기";
+                slotTarget.className = "px-2.5 py-1 rounded bg-slate-800 border border-slate-600 text-slate-400 font-bold";
+            }
+
+            const teamBadge = document.getElementById('my-team-badge');
+            if (team === 'blue') {
+                teamBadge.innerText = `🔵 ALPHA BLUE [CIRCUIT #${targetNum}/5]`;
+                teamBadge.className = 'text-xs px-3.5 py-1 bg-cyan-500/25 text-cyan-300 border border-cyan-400 rounded-full font-bold font-racing';
+            } else {
+                teamBadge.innerText = `🔴 OMEGA RED [CIRCUIT #${targetNum}/5]`;
+                teamBadge.className = 'text-xs px-3.5 py-1 bg-rose-500/25 text-rose-300 border border-rose-400 rounded-full font-bold font-racing';
+            }
+
+            const teamSize = Math.max(1, myMembers.length);
+            const myIndex = myMembers.findIndex(m => m.id === myPlayerId || m.name === currentUserName);
+            const activeMemberIndex = getStageActorIndex(currentStage, teamSize, targetNum);
+            const activeMemberObj = myMembers[activeMemberIndex];
+            const activeMemberName = activeMemberObj ? activeMemberObj.name : `${activeMemberIndex + 1}번 라이더`;
+
+            const isMyTurn = (myIndex !== -1) && (myIndex === activeMemberIndex);
+
+            if (isMyTurn && !prevWasMyTurn) {
+                sfx.radarPing();
+            }
+            prevWasMyTurn = isMyTurn;
+
+            const roleBadge = document.getElementById('my-role-badge');
+            if (myIndex !== -1) {
+                roleBadge.innerText = `내 포지션: ${getRoleDescription(myIndex, teamSize, targetNum)}`;
+                roleBadge.className = isMyTurn 
+                    ? 'text-xs px-3.5 py-1 bg-yellow-400 text-slate-950 border-2 border-yellow-300 rounded-full font-racing font-bold animate-pulse'
+                    : 'text-xs px-3.5 py-1 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 rounded-full font-bold font-mono-code';
+            } else {
+                roleBadge.innerText = "사령부 관전 중";
+            }
+
+            const instEl = document.getElementById('step-instruction');
+            const slopeControl = document.getElementById('slope-choice-control');
+            const numControl = document.getElementById('number-input-control');
+            const fireControl = document.getElementById('fire-rail-control');
+            const waitingNotice = document.getElementById('waiting-notice');
+            const currentActorEl = document.getElementById('current-actor-name');
+            const stepNumInput = document.getElementById('step-number-input');
+
+            // Prevent input auto-clearing unless stage actually changes
+            const isStageChanged = (lastRenderedStage !== currentStage || lastRenderedTarget !== targetNum);
+            lastRenderedStage = currentStage;
+            lastRenderedTarget = targetNum;
+
+            if (currentStage === 0) {
+                instEl.innerText = `【1단계: 기울기 경사 분석관】 레일의 변화율(x증가량 분의 y증가량)을 계산해 올바른 기울기 a 값을 선택하세요!`;
+            } else if (currentStage === 1) {
+                instEl.innerText = `【2단계: y절편 게이트 조준사】 레일이 y축과 만나는 시작점(x=0일 때의 y값)인 [ y절편 b ] 의 숫자 값을 입력하세요!`;
+            } else if (currentStage === 2) {
+                instEl.innerText = `【3단계: 부스터 게이트 검증관】 완성된 식 ${currentMission.eqStr} 에 x = ${currentMission.xGate} 를 대입해 부스터 링의 [ y좌표 값 ] 을 산출하세요!`;
+            } else if (currentStage === 3) {
+                instEl.innerText = `【4단계: 네온 부스터 점화관】 일차함수 레일웨이 100% 완전 연결 완료! 전술 부스터를 점화해 서킷을 질주하세요!`;
+            }
+
+            if (isMyTurn) {
+                waitingNotice.classList.add('hidden');
+                if (currentStage === 0) {
+                    numControl.classList.add('hidden');
+                    fireControl.classList.add('hidden');
+                    slopeControl.classList.remove('hidden');
+                    currentMission.slopeChoices.forEach((slopeVal, idx) => {
+                        const btn = document.getElementById(`slope-btn-${idx}`);
+                        if (btn) btn.innerText = `기울기 a = ${slopeVal}`;
+                    });
+                } else if (currentStage === 1 || currentStage === 2) {
+                    slopeControl.classList.add('hidden');
+                    fireControl.classList.add('hidden');
+                    numControl.classList.remove('hidden');
+                    stepNumInput.disabled = false;
+                    if (isStageChanged) {
+                        stepNumInput.value = '';
+                        stepNumInput.focus();
+                    }
+                    stepNumInput.placeholder = currentStage === 1 ? "y절편 b 숫자 입력" : `x=${currentMission.xGate} 일 때 y값 입력`;
+                } else {
+                    slopeControl.classList.add('hidden');
+                    numControl.classList.add('hidden');
+                    fireControl.classList.remove('hidden');
+                }
+            } else {
+                slopeControl.classList.add('hidden');
+                numControl.classList.add('hidden');
+                fireControl.classList.add('hidden');
+                waitingNotice.classList.remove('hidden');
+                currentActorEl.innerText = `${activeMemberName} (${activeMemberIndex + 1}번 라이더)`;
+            }
+
+            const stageTitles = [
+                "① 기울기 경사 분석",
+                "② y절편 게이트 락온",
+                "③ 부스터 게이트 검증",
+                "④ 네온 부스터 질주 🚀"
+            ];
+
+            for (let s = 0; s < 4; s++) {
+                const card = document.getElementById(`stage-card-${s}`);
+                const stageActorIdx = getStageActorIndex(s, teamSize, targetNum);
+                const stageActorObj = myMembers[stageActorIdx];
+                const stageActorName = stageActorObj ? stageActorObj.name : `${stageActorIdx + 1}번 주자`;
+                const isThisMine = (myIndex === stageActorIdx);
+
+                card.innerHTML = `<div class="font-bold text-xs">${stageTitles[s]}</div>
+                                  <div class="text-[11px] mt-1 ${isThisMine ? 'text-yellow-300 font-bold' : 'text-slate-400'}">담당: ${stageActorName}${isThisMine ? ' (나)' : ''}</div>`;
+
+                if (s === currentStage) {
+                    card.className = "p-2.5 rounded-xl border-2 transition-all bg-cyan-400/20 border-cyan-300 text-yellow-300 font-bold animate-pulse shadow-lg";
+                } else if (s < currentStage) {
+                    card.className = "p-2.5 rounded-xl border transition-all bg-cyan-950/60 border-cyan-500/60 text-cyan-300 font-semibold";
+                } else {
+                    card.className = "p-2.5 rounded-xl border transition-all bg-slate-900/60 border-slate-800 text-slate-500";
+                }
+            }
+        }
+
+        window.submitSlopeStep = async function(choiceIdx) {
+            if (isLockedOut) return;
+            if (!lastKnownRoomData) return;
+            const data = lastKnownRoomData;
+            const currentStage = myTeam === 'blue' ? (data.blueStage || 0) : (data.redStage || 0);
+            const mission = myTeam === 'blue' ? data.blueMission : data.redMission;
+
+            if (currentStage !== 0) return;
+
+            if (choiceIdx === mission.slopeCorrectIndex) {
+                sfx.railConnect();
+                const nextData = { ...data };
+                if (myTeam === 'blue') nextData.blueStage = 1;
+                else nextData.redStage = 1;
+
+                showStepFeedback(`✨ [기울기 a = ${mission.a} 각도 조율 성공!] 레일 경사각 고정 완료! 2번 라이더 y절편 락온 개시!`, false);
+                nextData.updatedAt = Date.now();
+                await syncStateUpdate(nextData);
+            } else {
+                showStepFeedback("❌ 기울기 판정 오류! x증가량과 y증가량의 부호 및 나눗셈을 다시 점검하세요. (5초 냉각)", true);
+                triggerLockoutPenalty();
+            }
+        };
+
+        window.submitNumberStep = async function() {
+            if (isLockedOut) return;
+            if (!lastKnownRoomData) return;
+            const inputEl = document.getElementById('step-number-input');
+            const sanitized = inputEl.value.trim().replace(/[^0-9.-]/g, '');
+            const val = parseFloat(sanitized);
+
+            if (isNaN(val)) {
+                showStepFeedback("숫자를 입력해 주세요!", true);
+                sfx.error();
+                return;
+            }
+
+            const data = lastKnownRoomData;
+            const currentStage = myTeam === 'blue' ? (data.blueStage || 0) : (data.redStage || 0);
+            const mission = myTeam === 'blue' ? data.blueMission : data.redMission;
+
+            if (currentStage === 1) {
+                if (val === mission.b) {
+                    sfx.railConnect();
+                    const nextData = { ...data };
+                    if (myTeam === 'blue') nextData.blueStage = 2;
+                    else nextData.redStage = 2;
+
+                    showStepFeedback(`✨ [y절편 b = ${val} 연결 완료!] 레일 시작 고도 확정! 3번 라이더 목표 게이트 통과점 산출 개시!`, false);
+                    nextData.updatedAt = Date.now();
+                    await syncStateUpdate(nextData);
+                } else {
+                    showStepFeedback(`❌ y절편 오류! 레일이 y축과 만나는 점(0, b)의 y좌표 부호를 다시 확인하세요. (5초 냉각)`, true);
+                    triggerLockoutPenalty();
+                }
+            } else if (currentStage === 2) {
+                if (val === mission.yGate) {
+                    sfx.unlockChirp();
+                    const nextData = { ...data };
+                    if (myTeam === 'blue') nextData.blueStage = 3;
+                    else nextData.redStage = 3;
+
+                    showStepFeedback(`🎯 [부스터 링 (${mission.xGate}, ${mission.yGate}) 락온 완료!] 네온 레일 100% 완전 결속! 4번 라이더 부스터를 점화하세요!`, false);
+                    nextData.updatedAt = Date.now();
+                    await syncStateUpdate(nextData);
+                } else {
+                    showStepFeedback(`❌ 게이트 통과 좌표 오류! ${mission.eqStr} 식에 x=${mission.xGate} 를 대입한 y값을 다시 계산하세요. (5초 냉각)`, true);
+                    triggerLockoutPenalty();
+                }
+            }
+        };
+
+        window.openBoosterModal = function() {
+            document.getElementById('payload-modal').classList.remove('hidden');
+        };
+
+        window.choosePayload = async function(payloadType) {
+            document.getElementById('payload-modal').classList.add('hidden');
+            if (!lastKnownRoomData) return;
+            const data = lastKnownRoomData;
+            const enemyTeam = myTeam === 'blue' ? 'red' : 'blue';
+            const mission = myTeam === 'blue' ? data.blueMission : data.redMission;
+
+            sfx.boosterBlast();
+            triggerKartBoosterSprint(myTeam, mission.a, mission.b, payloadType);
+
+            const nextData = { ...data };
+            nextData.lastBoost = {
+                fromTeam: myTeam,
+                a: mission.a,
+                b: mission.b,
+                payloadType: payloadType,
+                id: Date.now()
+            };
+
+            if (payloadType === 'electro_slick') {
+                nextData.slickTarget = enemyTeam;
+                nextData.slickId = Date.now();
+                showStepFeedback(`🛢️ [${mission.trackName}] 완주 질주! 상대 팀 트랙에 전자기 슬릭탄 투척!`, false);
+            } else {
+                showStepFeedback(`🚀 [${mission.trackName}] 일차함수 ${mission.eqStr} 레일 통과! 음속 슈퍼 부스터 점화!`, false);
+            }
+
+            setTimeout(async () => {
+                const latest = lastKnownRoomData || nextData;
+                const hitData = { ...latest };
+
+                if (myTeam === 'blue') {
+                    hitData.blueKills = Math.min(5, (hitData.blueKills || 0) + 1);
+                    const nextTargetNum = hitData.blueKills + 1;
+                    hitData.blueStage = 0;
+                    hitData.blueMission = generateLinearRailMission(nextTargetNum);
+                } else {
+                    hitData.redKills = Math.min(5, (hitData.redKills || 0) + 1);
+                    const nextTargetNum = hitData.redKills + 1;
+                    hitData.redStage = 0;
+                    hitData.redMission = generateLinearRailMission(nextTargetNum);
+                }
+
+                hitData.updatedAt = Date.now();
+                await syncStateUpdate(hitData);
+            }, 850);
+
+            nextData.updatedAt = Date.now();
+            await syncStateUpdate(nextData);
+        };
+
+        function activateSlickCover() {
+            slickWipesRemaining = 5;
+            document.getElementById('slick-wipe-count').innerText = slickWipesRemaining;
+            document.getElementById('slick-overlay').classList.remove('hidden');
+            sfx.error();
+        }
+
+        window.cleanSlick = function() {
+            slickWipesRemaining--;
+            document.getElementById('slick-wipe-count').innerText = slickWipesRemaining;
+            sfx.playTone(420, 'triangle', 0.1, 0.2);
+            if (slickWipesRemaining <= 0) {
+                document.getElementById('slick-overlay').classList.add('hidden');
+                sfx.success();
+            }
+        };
+
+        function showStepFeedback(text, isError) {
+            const el = document.getElementById('battle-feedback');
+            el.innerText = text;
+            el.className = isError 
+                ? "text-sm font-bold text-rose-400 min-h-[24px] mt-2 animate-pulse" 
+                : "text-sm font-bold text-cyan-300 min-h-[24px] mt-2";
+        }
+
+        window.sendQuickCheer = function(text) {
+            showStepFeedback(`📻 [크루 무전] ${text}`, false);
+            sfx.playTone(620, 'sine', 0.12, 0.2);
+        };
+
+        window.showCustomModal = function(title, msg) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerText = msg;
+            document.getElementById('custom-modal').classList.remove('hidden');
+        };
+
+        window.closeCustomModal = function() {
+            document.getElementById('custom-modal').classList.add('hidden');
+        };
+
+        function triggerGrandVictory(winnerTeam, roomData) {
+            sfx.victoryFanfare();
+            const isBlueWin = winnerTeam === 'blue';
+            const winnerName = isBlueWin ? "🔵 알파 블루 네온 레일팀" : "🔴 오메가 레드 터보 레일팀";
+            const rawMembers = isBlueWin ? roomData.blueMembers : roomData.redMembers;
+            const members = (rawMembers || []).map(m => m.name || m);
+
+            document.getElementById('victory-team-title').innerText = `${winnerName} 5개 서킷 완전 돌파 대승리!`;
+            document.getElementById('victory-members-list').innerText = members.length > 0 ? members.join(', ') : '단독 라이더';
+            document.getElementById('victory-total-time').innerText = `${((Date.now() - missionStartTime) / 1000).toFixed(1)}초`;
+
+            setTimeout(() => {
+                document.getElementById('victory-modal').classList.remove('hidden');
+            }, 1000);
+        }
+
+        // ==========================================
+        // 🚀 HIGH-SPEED 2D NEON RAIL CANVAS ENGINE
+        // ==========================================
+        let canvas, ctx;
+        let tacticalPings = [];
+        let speedBoosters = [];
+        let sparks = [];
+        let gridOffset = 0;
+
+        function initRailCanvas() {
+            canvas = document.getElementById('rail-canvas');
+            ctx = canvas.getContext('2d');
+            resizeRailCanvas();
+            window.addEventListener('resize', resizeRailCanvas);
+
+            canvas.addEventListener('click', handleCanvasPing);
+            canvas.addEventListener('touchstart', (e) => {
+                if (e.touches && e.touches[0]) {
+                    const touch = e.touches[0];
+                    const rect = canvas.getBoundingClientRect();
+                    triggerPingFromCoords(touch.clientX - rect.left, touch.clientY - rect.top);
+                }
+            });
+
+            requestAnimationFrame(renderRailLoop);
+        }
+
+        function resizeRailCanvas() {
+            if (!canvas || !canvas.parentElement) return;
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+
+        function handleCanvasPing(e) {
+            const rect = canvas.getBoundingClientRect();
+            triggerPingFromCoords(e.clientX - rect.left, e.clientY - rect.top);
+        }
+
+        function triggerPingFromCoords(cx, cy) {
+            sfx.tacticalPing();
+            addTacticalPingCoords(cx, cy, currentUserName || '라이더');
+
+            if (bc) {
+                try {
+                    bc.postMessage({ type: 'LOCAL_PING', team: myTeam, x: Math.round(cx), y: Math.round(cy), sender: currentUserName || '라이더' });
+                } catch (e) {}
+            }
+
+            const now = Date.now();
+            if (now - lastPingSentTime > 2500 && lastKnownRoomData) {
+                lastPingSentTime = now;
+                const pingData = { ...lastKnownRoomData };
+                pingData.lastPing = {
+                    team: myTeam,
+                    x: Math.round(cx),
+                    y: Math.round(cy),
+                    sender: currentUserName || '라이더',
+                    id: Date.now() + Math.random()
+                };
+                syncStateUpdate(pingData);
+            }
+        }
+
+        function addTacticalPingCoords(x, y, sender) {
+            tacticalPings.push({
+                x: x,
+                y: y,
+                sender: sender,
+                radius: 6,
+                maxRadius: 40,
+                alpha: 1
+            });
+        }
+
+        function triggerKartBoosterSprint(team, a, b, payloadType) {
+            const midX = canvas.width / 2;
+            const midY = canvas.height / 2;
+            const scale = Math.min(canvas.width, canvas.height) / 14;
+
+            speedBoosters.push({
+                team: team,
+                a: a,
+                b: b,
+                progress: 0,
+                color: payloadType === 'electro_slick' ? '#d946ef' : '#06b6d4'
+            });
+
+            for (let i = 0; i < 45; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 8 + 2;
+                sparks.push({
+                    x: midX,
+                    y: midY,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    radius: Math.random() * 4 + 2,
+                    color: '#facc15',
+                    alpha: 1
+                });
+            }
+        }
+
+        function renderRailLoop() {
+            if (!ctx || !canvas) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const w = canvas.width;
+            const h = canvas.height;
+            const midX = w / 2;
+            const midY = h / 2;
+            const scale = Math.min(w, h) / 14; // 1 unit in pixels
+
+            gridOffset = (gridOffset + 1.2) % 35;
+
+            // 1. Synthwave Dark Neon Grid Background
+            ctx.fillStyle = '#020617';
+            ctx.fillRect(0, 0, w, h);
+
+            // Animated Speed Grid Lines
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.08)';
+            ctx.lineWidth = 1;
+            for (let x = (gridOffset % 35); x < w; x += 35) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, h);
+                ctx.stroke();
+            }
+            for (let y = 0; y < h; y += 35) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(w, y);
+                ctx.stroke();
+            }
+
+            // 2. Coordinate Grid & Axes (X: -6 to 6, Y: -6 to 6)
+            ctx.save();
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.15)';
+            ctx.lineWidth = 1;
+            for (let i = -6; i <= 6; i++) {
+                if (i === 0) continue;
+                // Vertical grid lines
+                ctx.beginPath();
+                ctx.moveTo(midX + i * scale, 0);
+                ctx.lineTo(midX + i * scale, h);
+                ctx.stroke();
+                // Horizontal grid lines
+                ctx.beginPath();
+                ctx.moveTo(0, midY - i * scale);
+                ctx.lineTo(w, midY - i * scale);
+                ctx.stroke();
+            }
+
+            // Main X & Y Axis Lines
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, midY);
+            ctx.lineTo(w, midY);
+            ctx.moveTo(midX, 0);
+            ctx.lineTo(midX, h);
+            ctx.stroke();
+
+            // Coordinate Axis Numbers
+            ctx.font = 'bold 10px "JetBrains Mono", monospace';
+            ctx.fillStyle = '#67e8f9';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            for (let i = -6; i <= 6; i++) {
+                if (i === 0) continue;
+                ctx.fillText(i, midX + i * scale, midY + 12);
+                ctx.fillText(i, midX - 12, midY - i * scale);
+            }
+            ctx.fillText("O", midX - 8, midY + 10);
+            ctx.fillText("x", w - 10, midY - 10);
+            ctx.fillText("y", midX + 10, 10);
+            ctx.restore();
+
+            // 3. Draw Active Linear Function Rail & Hover Cart
+            if (lastKnownRoomData) {
+                const mission = myTeam === 'blue' ? lastKnownRoomData.blueMission : lastKnownRoomData.redMission;
+                const currentStage = myTeam === 'blue' ? (lastKnownRoomData.blueStage || 0) : (lastKnownRoomData.redStage || 0);
+                drawActiveNeonRailway(midX, midY, scale, mission, currentStage);
+            }
+
+            // 4. Opponent PiP Mini Feed (Top Right)
+            drawOpponentMiniFeed(w - 135, 45);
+
+            // 5. Booster Sprinters
+            for (let i = speedBoosters.length - 1; i >= 0; i--) {
+                const b = speedBoosters[i];
+                b.progress += 0.045;
+
+                // Animate super kart moving along y = ax + b
+                const startXMath = -5;
+                const endXMath = 5;
+                const curXMath = startXMath + (endXMath - startXMath) * b.progress;
+                const curYMath = b.a * curXMath + b.b;
+
+                const curCanvasX = midX + curXMath * scale;
+                const curCanvasY = midY - curYMath * scale;
+
+                ctx.save();
+                ctx.shadowBlur = 24;
+                ctx.shadowColor = b.color;
+                ctx.fillStyle = '#fef08a';
+                ctx.beginPath();
+                ctx.arc(curCanvasX, curCanvasY, 8, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Spark tail
+                for (let t = 0; t < 2; t++) {
+                    sparks.push({
+                        x: curCanvasX + (Math.random() - 0.5) * 8,
+                        y: curCanvasY + (Math.random() - 0.5) * 8,
+                        vx: (Math.random() - 0.5) * 2,
+                        vy: (Math.random() - 0.5) * 2,
+                        radius: Math.random() * 3 + 1.5,
+                        color: b.color,
+                        alpha: 0.8
+                    });
+                }
+                ctx.restore();
+
+                if (b.progress >= 1) speedBoosters.splice(i, 1);
+            }
+
+            // 6. Tactical Pings
+            for (let i = tacticalPings.length - 1; i >= 0; i--) {
+                const p = tacticalPings[i];
+                p.radius += 0.9;
+                p.alpha -= 0.025;
+
+                ctx.save();
+                ctx.strokeStyle = `rgba(250, 204, 21, ${p.alpha})`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.stroke();
+
+                ctx.fillStyle = `rgba(254, 240, 138, ${p.alpha})`;
+                ctx.font = 'bold 11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(`📍 ${p.sender}`, p.x, p.y - p.radius - 4);
+                ctx.restore();
+
+                if (p.alpha <= 0) tacticalPings.splice(i, 1);
+            }
+
+            // 7. Sparks & Exhaust Particles
+            for (let i = sparks.length - 1; i >= 0; i--) {
+                const exp = sparks[i];
+                exp.x += exp.vx;
+                exp.y += exp.vy;
+                exp.alpha -= 0.035;
+
+                ctx.save();
+                ctx.globalAlpha = exp.alpha;
+                ctx.fillStyle = exp.color;
+                ctx.beginPath();
+                ctx.arc(exp.x, exp.y, exp.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+
+                if (exp.alpha <= 0) sparks.splice(i, 1);
+            }
+
+            requestAnimationFrame(renderRailLoop);
+        }
+
+        function drawActiveNeonRailway(cx, cy, scale, mission, currentStage) {
+            if (!mission) return;
+
+            ctx.save();
+
+            // 1. Stage 0: Slope a Preview vs Stage 1: y-intercept b Lock
+            const a = mission.a;
+            const b = currentStage >= 2 ? mission.b : 0;
+
+            const isRailLocked = currentStage >= 3;
+            const railColor = isRailLocked ? '#38bdf8' : (currentStage >= 1 ? '#06b6d4' : 'rgba(6, 182, 212, 0.4)');
+
+            ctx.strokeStyle = railColor;
+            ctx.lineWidth = isRailLocked ? 4 : (currentStage >= 1 ? 3 : 2);
+            ctx.shadowBlur = isRailLocked ? 20 : (currentStage >= 1 ? 12 : 4);
+            ctx.shadowColor = '#06b6d4';
+
+            // Draw line y = ax + b from x = -6 to 6
+            const x1 = -6, y1 = a * x1 + b;
+            const x2 = 6, y2 = a * x2 + b;
+
+            ctx.beginPath();
+            ctx.moveTo(cx + x1 * scale, cy - y1 * scale);
+            ctx.lineTo(cx + x2 * scale, cy - y2 * scale);
+            ctx.stroke();
+
+            // Dual Parallel Track Rails
+            if (currentStage >= 1) {
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([8, 6]);
+                ctx.beginPath();
+                ctx.moveTo(cx + x1 * scale - 4, cy - y1 * scale - 4);
+                ctx.lineTo(cx + x2 * scale - 4, cy - y2 * scale - 4);
+                ctx.moveTo(cx + x1 * scale + 4, cy - y1 * scale + 4);
+                ctx.lineTo(cx + x2 * scale + 4, cy - y2 * scale + 4);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // 2. Stage 1: Highlight y-intercept (0, b)
+            if (currentStage >= 2) {
+                const interceptCanvasX = cx;
+                const interceptCanvasY = cy - mission.b * scale;
+
+                ctx.fillStyle = '#facc15';
+                ctx.shadowBlur = 14;
+                ctx.shadowColor = '#facc15';
+                ctx.beginPath();
+                ctx.arc(interceptCanvasX, interceptCanvasY, 6, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.font = 'bold 11px "JetBrains Mono", monospace';
+                ctx.fillStyle = '#fef08a';
+                ctx.textAlign = 'left';
+                ctx.fillText(`y절편 (0, ${mission.b})`, interceptCanvasX + 10, interceptCanvasY);
+            }
+
+            // 3. Stage 2 & 3: Target Booster Gate Ring (xGate, yGate)
+            const gateCanvasX = cx + mission.xGate * scale;
+            const gateCanvasY = cy - mission.yGate * scale;
+
+            ctx.save();
+            ctx.translate(gateCanvasX, gateCanvasY);
+
+            if (currentStage >= 3) {
+                // 100% Locked Booster Ring Hologram
+                const pulse = Math.sin(Date.now() / 150) * 4;
+                const ringR = 22 + pulse;
+
+                ctx.strokeStyle = '#ef4444';
+                ctx.lineWidth = 3;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#ef4444';
+                ctx.beginPath();
+                ctx.arc(0, 0, ringR, 0, Math.PI * 2);
+                ctx.stroke();
+
+                ctx.font = '22px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText("🚀", 0, -2);
+
+                ctx.font = 'bold 12px "JetBrains Mono", monospace';
+                ctx.fillStyle = '#fef08a';
+                ctx.fillText(`게이트 (${mission.xGate}, ${mission.yGate}) 락온!`, 0, -ringR - 12);
+            } else {
+                // Target Gate Awaiting Lock
+                ctx.strokeStyle = 'rgba(217, 70, 239, 0.6)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.arc(0, 0, 18, 0, Math.PI * 2);
+                ctx.stroke();
+
+                ctx.font = 'bold 10px "JetBrains Mono", monospace';
+                ctx.fillStyle = '#f0abfc';
+                ctx.textAlign = 'center';
+                ctx.fillText(`게이트 (${mission.xGate}, ?)`, 0, -24);
+            }
+            ctx.restore();
+
+            // 4. Hover Cart Position on Rail
+            const cartProg = (Date.now() / 2500) % 1;
+            const cartXMath = -4 + cartProg * 8;
+            const cartYMath = a * cartXMath + b;
+            const cartCanvasX = cx + cartXMath * scale;
+            const cartCanvasY = cy - cartYMath * scale;
+
+            ctx.save();
+            ctx.translate(cartCanvasX, cartCanvasY);
+            // Rotate cart along slope
+            const angle = -Math.atan(a);
+            ctx.rotate(angle);
+
+            // Cart Body
+            ctx.fillStyle = '#0f172a';
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#38bdf8';
+            ctx.beginPath();
+            ctx.roundRect ? ctx.roundRect(-16, -7, 32, 14, 4) : ctx.rect(-16, -7, 32, 14);
+            ctx.fill();
+            ctx.stroke();
+
+            // Cart Glow Headlight
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.arc(14, 0, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            ctx.restore();
+        }
+
+        function drawOpponentMiniFeed(x, y) {
+            if (!lastKnownRoomData) return;
+            const enemyTeam = myTeam === 'blue' ? 'red' : 'blue';
+            const enemyKills = enemyTeam === 'blue' ? (lastKnownRoomData.blueKills || 0) : (lastKnownRoomData.redKills || 0);
+            const enemyStage = enemyTeam === 'blue' ? (lastKnownRoomData.blueStage || 0) : (lastKnownRoomData.redStage || 0);
+
+            ctx.save();
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctx.strokeStyle = enemyTeam === 'red' ? '#fb7185' : '#38bdf8';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.roundRect ? ctx.roundRect(x, y, 125, 65, 8) : ctx.rect(x, y, 125, 65);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.font = 'bold 9px "JetBrains Mono", monospace';
+            ctx.fillStyle = enemyTeam === 'red' ? '#fda4af' : '#c7d2fe';
+            ctx.fillText(`📡 적 레일팀 피드`, x + 8, y + 15);
+
+            ctx.font = 'bold 10px "Orbitron", sans-serif';
+            ctx.fillStyle = '#facc15';
+            ctx.fillText(`완주: ${enemyKills} / 5`, x + 8, y + 32);
+
+            const stageNames = ["1단계: 기울기", "2단계: y절편", "3단계: 게이트", "⚠️ 부스터!"];
+            ctx.fillStyle = enemyStage === 3 ? '#ef4444' : '#e9d5ff';
+            ctx.fillText(stageNames[enemyStage] || "대기", x + 8, y + 48);
+
+            if (enemyStage === 3) {
+                ctx.fillStyle = (Date.now() % 400 < 200) ? '#ef4444' : '#7f1d1d';
+                ctx.beginPath();
+                ctx.arc(x + 105, y + 25, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+    </script>
+</body>
+</html>
