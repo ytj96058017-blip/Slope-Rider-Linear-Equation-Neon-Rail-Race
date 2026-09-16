@@ -154,6 +154,14 @@
                 </button>
             </div>
 
+            <!-- Teacher Spectator Mode Button -->
+            <div class="mb-5">
+                <button onclick="joinSpectator()" class="w-full py-4 rounded-2xl font-racing text-lg md:text-xl bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 hover:from-purple-900 hover:to-indigo-900 transition-all duration-200 shadow-2xl border-2 border-purple-400 text-purple-200 flex items-center justify-center gap-3 transform hover:-translate-y-0.5 active:scale-95">
+                    <span class="text-2xl animate-pulse">📺</span>
+                    <span class="tracking-wide font-bold">교사 전용 / 대형 스크린 중계석 입장 (학생 명단 미포함 관전)</span>
+                </button>
+            </div>
+
             <!-- Lobby Reset Button -->
             <div class="flex justify-center mb-4">
                 <button onclick="resetCurrentRoomData()" class="px-4 py-2 bg-rose-950/90 hover:bg-rose-900 border border-rose-500/70 rounded-xl text-xs text-rose-300 font-bold transition flex items-center gap-2 shadow font-mono-code">
@@ -310,6 +318,35 @@
                 <div class="w-full max-w-xl flex flex-col items-center gap-2.5">
                     <div id="step-instruction" class="text-sm md:text-base font-bold text-cyan-200 min-h-[40px] flex items-center justify-center px-2">
                         단계 안내 로딩 중...
+                    </div>
+
+                    <!-- Spectator Dual-Team Live Broadcast Panel -->
+                    <div id="spectator-broadcast-panel" class="hidden w-full max-w-2xl bg-gradient-to-r from-slate-900/90 via-purple-950/80 to-slate-900/90 border-2 border-purple-400/80 rounded-2xl p-4 shadow-2xl hud-corner">
+                        <div class="flex items-center justify-between border-b border-purple-500/40 pb-2 mb-3">
+                            <span class="text-xs font-mono-code text-purple-300 font-bold flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+                                <span>ON-AIR // 대형 스크린 실시간 중계석</span>
+                            </span>
+                            <span class="text-[11px] font-racing text-yellow-300">교사 화면: 학생 턴 미개입</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+                            <div class="p-2.5 rounded-xl bg-cyan-950/60 border border-cyan-500/50">
+                                <div class="text-xs text-cyan-300 font-bold font-racing mb-1 flex items-center justify-between">
+                                    <span>🔵 블루 니트로 (블루)</span>
+                                    <span id="spec-blue-wave" class="text-[10px] text-yellow-300 font-mono-code">서킷 #1</span>
+                                </div>
+                                <div id="spec-blue-stage" class="text-xs font-bold text-white mb-1">1단계: 기울기</div>
+                                <div id="spec-blue-actor" class="text-[11px] text-cyan-200 font-mono-code truncate">주자: 대기 중</div>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-rose-950/60 border border-rose-500/50">
+                                <div class="text-xs text-rose-300 font-bold font-racing mb-1 flex items-center justify-between">
+                                    <span>🔴 레드 터보 (레드)</span>
+                                    <span id="spec-red-wave" class="text-[10px] text-yellow-300 font-mono-code">서킷 #1</span>
+                                </div>
+                                <div id="spec-red-stage" class="text-xs font-bold text-white mb-1">1단계: 기울기</div>
+                                <div id="spec-red-actor" class="text-[11px] text-rose-200 font-mono-code truncate">주자: 대기 중</div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Step 0: Slope Selection Buttons (4 Choices) -->
@@ -962,6 +999,52 @@
             window.addEventListener('beforeunload', leaveRoomCleanup);
         };
 
+        // Teacher Spectator / Broadcaster Entry Function
+        window.joinSpectator = async function() {
+            const codeInput = document.getElementById('room-code');
+            const code = (codeInput ? codeInput.value.trim() : '') || 'slope201';
+
+            currentUserName = '교사 중계석';
+            currentRoomCode = code;
+            myTeam = 'spectator';
+
+            try {
+                if (window.BroadcastChannel) {
+                    if (bc) bc.close();
+                    bc = new BroadcastChannel(`slope_rider_${currentRoomCode}`);
+                    bc.onmessage = (event) => {
+                        const msg = event.data;
+                        if (!msg) return;
+                        if (msg.type === 'LOCAL_PING') {
+                            addTacticalPingCoords(msg.x, msg.y, msg.sender);
+                        } else if (msg.type === 'SYNC_STATE' && msg.payload) {
+                            applyRoomState(msg.payload);
+                        }
+                    };
+                }
+            } catch (e) {}
+
+            document.getElementById('lobby-screen').classList.add('hidden');
+            document.getElementById('battle-screen').classList.remove('hidden');
+            initRailCanvas();
+            sfx.victoryFanfare();
+
+            try {
+                if (db) {
+                    const roomRef = doc(db, 'slope_rider_rooms', currentRoomCode);
+                    startFirestoreListener(roomRef);
+                    const snap = await getDoc(roomRef);
+                    if (snap.exists()) {
+                        applyRoomState(snap.data());
+                    } else {
+                        applyRoomState(createInitialRoomData());
+                    }
+                }
+            } catch (err) {
+                applyRoomState(createInitialRoomData());
+            }
+        };
+
         async function leaveRoomCleanup() {
             if (!currentRoomCode || !myTeam || !db) return;
             try {
@@ -1026,7 +1109,7 @@
 
             if (data.lastPing && (!window.lastObservedPingId || window.lastObservedPingId !== data.lastPing.id)) {
                 window.lastObservedPingId = data.lastPing.id;
-                if (data.lastPing.team === myTeam) {
+                if (myTeam === 'spectator' || data.lastPing.team === myTeam) {
                     addTacticalPingCoords(data.lastPing.x, data.lastPing.y, data.lastPing.sender);
                 }
             }
@@ -1126,6 +1209,74 @@
 
         function updatePipelineUI(data) {
             const team = myTeam;
+
+            // Handle Spectator / Broadcaster View
+            if (team === 'spectator') {
+                const specPanel = document.getElementById('spectator-broadcast-panel');
+                const slopeControl = document.getElementById('slope-choice-control');
+                const numControl = document.getElementById('number-input-control');
+                const fireControl = document.getElementById('fire-booster-control');
+                const waitingNotice = document.getElementById('waiting-notice');
+
+                if (specPanel) specPanel.classList.remove('hidden');
+                if (slopeControl) slopeControl.classList.add('hidden');
+                if (numControl) numControl.classList.add('hidden');
+                if (fireControl) fireControl.classList.add('hidden');
+                if (waitingNotice) waitingNotice.classList.add('hidden');
+
+                const teamBadge = document.getElementById('my-team-badge');
+                if (teamBadge) {
+                    teamBadge.innerText = `📺 ON-AIR // 교사 공식 중계석`;
+                    teamBadge.className = 'text-xs px-3.5 py-1 bg-purple-500/30 text-purple-300 border border-purple-400 rounded-full font-bold font-racing animate-pulse';
+                }
+                const roleBadge = document.getElementById('my-role-badge');
+                if (roleBadge) {
+                    roleBadge.innerText = `관전 모드 (학생 풀이 미방해)`;
+                    roleBadge.className = 'text-xs px-3.5 py-1 bg-slate-800 text-slate-300 border border-slate-600 rounded-full font-bold font-mono-code';
+                }
+
+                const stageNames = ["① 기울기 경사관", "② y절편 앵커사", "③ 게이트 락온관", "④ 음속 부스터 🚀"];
+                const bMembers = cleanMemberList(data.blueMembers || []);
+                const rMembers = cleanMemberList(data.redMembers || []);
+                const bStage = data.blueStage || 0;
+                const rStage = data.redStage || 0;
+                const bScore = data.blueScore || 0;
+                const rScore = data.redScore || 0;
+                const bCircuit = Math.min(7, bScore + 1);
+                const rCircuit = Math.min(7, rScore + 1);
+
+                const bActorIdx = getStageActorIndex(bStage, Math.max(1, bMembers.length), bCircuit);
+                const rActorIdx = getStageActorIndex(rStage, Math.max(1, rMembers.length), rCircuit);
+
+                const specBWave = document.getElementById('spec-blue-wave');
+                const specBStage = document.getElementById('spec-blue-stage');
+                const specBActor = document.getElementById('spec-blue-actor');
+                if (specBWave) specBWave.innerText = `서킷 #${bCircuit}/7 (${bScore}회 완주)`;
+                if (specBStage) specBStage.innerText = stageNames[bStage] || '대기 중';
+                if (specBActor) specBActor.innerText = `현재 주자: ${bMembers[bActorIdx] ? bMembers[bActorIdx].name : '대기 중'}`;
+
+                const specRWave = document.getElementById('spec-red-wave');
+                const specRStage = document.getElementById('spec-red-stage');
+                const specRActor = document.getElementById('spec-red-actor');
+                if (specRWave) specRWave.innerText = `서킷 #${rCircuit}/7 (${rScore}회 완주)`;
+                if (specRStage) specRStage.innerText = stageNames[rStage] || '대기 중';
+                if (specRActor) specRActor.innerText = `현재 주자: ${rMembers[rActorIdx] ? rMembers[rActorIdx].name : '대기 중'}`;
+
+                const instEl = document.getElementById('step-instruction');
+                if (instEl) {
+                    instEl.innerHTML = `<span class="text-yellow-300">📡 [실시간 중계 중] 양 팀의 일차함수 레일 레이스를 관전하고 있습니다.</span>`;
+                }
+
+                // Display leading team's mission in clue box
+                const leadMission = bScore >= rScore ? data.blueMission : data.redMission;
+                if (leadMission) {
+                    const clueEl = document.getElementById('circuit-clue-display');
+                    if (clueEl) clueEl.innerText = `[선두팀 힌트] ${leadMission.clueText}`;
+                }
+                return;
+            }
+
+            // Normal Student Pipeline UI
             const myRawMembers = team === 'blue' ? (data.blueMembers || []) : (data.redMembers || []);
             const myMembers = cleanMemberList(myRawMembers);
             const currentStage = team === 'blue' ? (data.blueStage || 0) : (data.redStage || 0);
@@ -1657,8 +1808,12 @@
 
             // 3. Draw Active Linear Function Trajectory with Dynamic Assembly
             if (lastKnownRoomData) {
-                const mission = myTeam === 'blue' ? lastKnownRoomData.blueMission : lastKnownRoomData.redMission;
-                const currentStage = myTeam === 'blue' ? (lastKnownRoomData.blueStage || 0) : (lastKnownRoomData.redStage || 0);
+                const mission = myTeam === 'spectator'
+                    ? ((lastKnownRoomData.blueScore || 0) >= (lastKnownRoomData.redScore || 0) ? lastKnownRoomData.blueMission : lastKnownRoomData.redMission)
+                    : (myTeam === 'blue' ? lastKnownRoomData.blueMission : lastKnownRoomData.redMission);
+                const currentStage = myTeam === 'spectator'
+                    ? ((lastKnownRoomData.blueScore || 0) >= (lastKnownRoomData.redScore || 0) ? (lastKnownRoomData.blueStage || 0) : (lastKnownRoomData.redStage || 0))
+                    : (myTeam === 'blue' ? (lastKnownRoomData.blueStage || 0) : (lastKnownRoomData.redStage || 0));
                 drawActiveNeonRailway(midX, midY, scale, mission, currentStage);
             }
 
