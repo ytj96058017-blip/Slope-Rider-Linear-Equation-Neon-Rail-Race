@@ -9,7 +9,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700;800&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Jua', 'Inter', sans-serif; }
+        body { 
+            font-family: 'Jua', 'Inter', sans-serif;
+            color: #f8fafc;
+            background-color: #020617;
+            margin: 0;
+            padding: 0;
+        }
+        .hidden { display: none !important; }
         .font-racing { font-family: 'Orbitron', 'Black Han Sans', sans-serif; }
         .font-mono-code { font-family: 'JetBrains Mono', monospace; }
         
@@ -339,12 +346,12 @@
                                 <div id="spec-blue-actor" class="text-[11px] text-cyan-200 font-mono-code truncate">주자: 대기 중</div>
                             </div>
                             <div class="p-2.5 rounded-xl bg-rose-950/60 border border-rose-500/50">
-                                <div class="text-xs text-rose-300 font-bold font-racing mb-1 flex items-center justify-between">
+                                <div class="text-xs text-amber-300 font-bold font-racing mb-1 flex items-center justify-between">
                                     <span>🔴 레드 터보 (레드)</span>
                                     <span id="spec-red-wave" class="text-[10px] text-yellow-300 font-mono-code">서킷 #1</span>
                                 </div>
                                 <div id="spec-red-stage" class="text-xs font-bold text-white mb-1">1단계: 기울기</div>
-                                <div id="spec-red-actor" class="text-[11px] text-rose-200 font-mono-code truncate">주자: 대기 중</div>
+                                <div id="spec-red-actor" class="text-[11px] text-amber-200 font-mono-code truncate">주자: 대기 중</div>
                             </div>
                         </div>
                     </div>
@@ -378,7 +385,8 @@
 
                     <!-- Step 3 Fire Button (Opens Booster Payload Modal) -->
                     <div id="fire-booster-control" class="hidden flex flex-col items-center gap-2 w-full max-w-md">
-                        <button onclick="openBoosterModal()" class="w-full py-4 bg-gradient-to-r from-cyan-400 via-sky-500 to-yellow-400 hover:from-cyan-300 hover:to-yellow-300 text-slate-950 font-racing text-xl md:text-2xl rounded-2xl shadow-xl border-2 border-white active:scale-95 transition animate-pulse flex items-center justify-center gap-2">
+                        <!-- ★ 연타 방지 가드 적용: id="fire-action-btn" 추가 -->
+                        <button id="fire-action-btn" onclick="openBoosterModal()" class="w-full py-4 bg-gradient-to-r from-cyan-400 via-sky-500 to-yellow-400 hover:from-cyan-300 hover:to-yellow-300 text-slate-950 font-racing text-xl md:text-2xl rounded-2xl shadow-xl border-2 border-white active:scale-95 transition animate-pulse flex items-center justify-center gap-2">
                             <span>🚀</span><span>1,200 km/h 초광속 음속 도약! (SONIC WARP! 💥)</span>
                         </button>
                         <span class="text-xs text-yellow-200 font-semibold font-mono-code">> 일차함수 레일 100% 완전 결속! 전술 부스터를 분사하세요!</span>
@@ -623,7 +631,7 @@
     <!-- Main Game Logic and Firebase Synchronizer -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { initializeFirestore, memoryLocalCache, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyChxrOzoTxFMy_BvkvNZLXAp1oRvN7Fb1g",
@@ -640,10 +648,7 @@
 
         try {
             const app = initializeApp(firebaseConfig);
-            db = initializeFirestore(app, {
-                localCache: memoryLocalCache()
-            });
-
+            db = getFirestore(app);
             const badge = document.getElementById('db-status-badge');
             if (badge) {
                 badge.innerText = "🟢 클라우드 DB 정상 연결!";
@@ -680,6 +685,9 @@
         let showGridPlane = true;
         let enemyMiniFeedFlashTimer = 0;
 
+        // ★ [연타 방지 가드 플래그] 음속 도약 부스터 버튼 중복 클릭 방지
+        let isActionProcessing = false;
+
         window.toggleGridDisplay = function() {
             showGridPlane = !showGridPlane;
             const btn = document.getElementById('grid-toggle-btn');
@@ -701,11 +709,6 @@
             "그랜드 챔피언 네온 서킷 #7"
         ];
 
-        /*
-           중2 수학 핵심: 100% 좌표 일치 일차함수 7대 서킷 생성기
-           - 스포일러 방지: 답안 텍스트(Δx, Δy)를 미리 주지 않고, 학생들이 눈금이나 공식으로 직접 유도
-           - 4대 유형 다변화: 두 점 통과, x/y 절편 조건, 평행선 조건, 음수 경사 종합
-        */
         function generateLinearRailMission(trackIndex = 1) {
             let mission = null;
             let attempts = 0;
@@ -716,17 +719,15 @@
                 const aPool = [1, 2, -1, -2];
                 const a = aPool[Math.floor(Math.random() * aPool.length)];
 
-                // Bounded y-intercept b so values stay cleanly within [-5, 5]
                 let b = 0;
                 if (Math.abs(a) === 1) {
-                    b = Math.floor(Math.random() * 5) - 2; // -2 to 2
+                    b = Math.floor(Math.random() * 5) - 2;
                 } else {
-                    b = Math.floor(Math.random() * 3) - 1; // -1 to 1
+                    b = Math.floor(Math.random() * 3) - 1;
                 }
 
-                // Sample points P1(x1, y1), P2(x2, y2)
                 let x1 = 0, x2 = 0;
-                x1 = Math.floor(Math.random() * 2) - 3; // -3 or -2
+                x1 = Math.floor(Math.random() * 2) - 3;
                 x2 = x1 + (Math.abs(a) === 1 ? 3 : 2);
                 
                 const y1 = a * x1 + b;
@@ -734,7 +735,6 @@
                 const deltaX = x2 - x1;
                 const deltaY = y2 - y1;
 
-                // Target gate point (must lie on line y = ax + b, xGate != 0, xGate != x1, xGate != x2)
                 let xGateCandidates = [-4, -3, -2, -1, 1, 2, 3, 4].filter(x => {
                     const y = a * x + b;
                     return x !== 0 && x !== x1 && x !== x2 && Math.abs(y) <= 5;
@@ -743,10 +743,8 @@
                 const xGate = xGateCandidates[Math.floor(Math.random() * xGateCandidates.length)];
                 const yGate = a * xGate + b;
 
-                // Screen boundary check [-5, 5]
                 if (Math.abs(y1) > 5 || Math.abs(y2) > 5 || Math.abs(yGate) > 5) continue;
 
-                // Equation text
                 let eqStr = "y = ";
                 if (a === 1) eqStr += "x";
                 else if (a === -1) eqStr += "-x";
@@ -755,21 +753,16 @@
                 if (b > 0) eqStr += ` + ${b}`;
                 else if (b < 0) eqStr += ` - ${Math.abs(b)}`;
 
-                // Clue types by circuit progress (no spoiler Delta numbers given directly!)
                 let clueType = (trackIndex - 1) % 3;
                 let clueText = "";
                 if (clueType === 0) {
-                    // Two points on plane: students must compute slope = (y2 - y1) / (x2 - x1)
                     clueText = `좌표평면의 두 데이터 비컨 (${x1}, ${y1}) 과 (${x2}, ${y2}) 를 연결하는 네온 레일 궤적!`;
                 } else if (clueType === 1) {
-                    // x and y variations without giving slope directly
                     clueText = `x의 값이 [ ${deltaX} ] 만큼 증가할 때 y의 값이 [ ${deltaY >= 0 ? '+' + deltaY : deltaY} ] 만큼 변화하는 하이퍼 레일!`;
                 } else {
-                    // Parallel condition
                     clueText = `직선 y = ${a === 1 ? '' : (a === -1 ? '-' : a)}x 와 평행하고, 점 (${x1}, ${y1}) 을 지나는 음속 서킷 레일!`;
                 }
 
-                // 4 Choices for slope a
                 const wrongSlopes = [-3, -2, -1, 1, 2, 3].filter(val => val !== a);
                 for (let i = wrongSlopes.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
@@ -937,18 +930,16 @@
         }
 
         window.joinTeam = async function(team) {
-            const nameInput = document.getElementById('player-name');
-            const codeInput = document.getElementById('room-code');
-            const name = (nameInput ? nameInput.value.trim() : '') || `드라이버_${Math.floor(Math.random()*900+100)}`;
-            const code = (codeInput ? codeInput.value.trim() : '') || 'slope201';
+            const name = document.getElementById('player-name').value.trim() || `드라이버_${Math.floor(Math.random()*900+100)}`;
+            const code = document.getElementById('room-code').value.trim() || 'slope201';
 
             currentUserName = name;
             currentRoomCode = code;
             myTeam = team;
+            isActionProcessing = false;
 
             const myMemberObj = { id: myPlayerId, name: currentUserName, lastSeen: Date.now(), joinedAt: myJoinedAt };
 
-            // BroadcastChannel for instant free zero-latency local sync
             try {
                 if (window.BroadcastChannel) {
                     if (bc) bc.close();
@@ -975,7 +966,6 @@
             else initialData.redMembers = [myMemberObj];
             applyRoomState(initialData);
 
-            // Register upon join to Firestore
             try {
                 if (db) {
                     const roomRef = doc(db, 'slope_rider_rooms', currentRoomCode);
@@ -999,7 +989,6 @@
             window.addEventListener('beforeunload', leaveRoomCleanup);
         };
 
-        // Teacher Spectator / Broadcaster Entry Function
         window.joinSpectator = async function() {
             const codeInput = document.getElementById('room-code');
             const code = (codeInput ? codeInput.value.trim() : '') || 'slope201';
@@ -1007,6 +996,7 @@
             currentUserName = '교사 중계석';
             currentRoomCode = code;
             myTeam = 'spectator';
+            isActionProcessing = false;
 
             try {
                 if (window.BroadcastChannel) {
@@ -1046,7 +1036,7 @@
         };
 
         async function leaveRoomCleanup() {
-            if (!currentRoomCode || !myTeam || !db) return;
+            if (!currentRoomCode || !myTeam || myTeam === 'spectator' || !db) return;
             try {
                 const roomRef = doc(db, 'slope_rider_rooms', currentRoomCode);
                 const snap = await getDoc(roomRef);
@@ -1093,15 +1083,12 @@
             data.redMembers = cleanMemberList(data.redMembers || []);
             lastKnownRoomData = data;
 
-            // Handle Booster Animation
             if (data.lastBooster && (!window.lastObservedBoostId || window.lastObservedBoostId !== data.lastBooster.id)) {
                 window.lastObservedBoostId = data.lastBooster.id;
 
                 if (data.lastBooster.fromTeam === myTeam) {
-                    // Only launch on the main track if it's OUR team's booster!
                     triggerSonicLeapLaunch(data.lastBooster.fromTeam, data.lastBooster.mission, data.lastBooster.payloadType);
                 } else {
-                    // Opponent completed their track! Trigger sound and flash in the Opponent Mini Feed
                     sfx.playTone(300, 'sawtooth', 0.3, 0.25);
                     enemyMiniFeedFlashTimer = Date.now() + 2500;
                 }
@@ -1114,13 +1101,11 @@
                 }
             }
 
-            // Handle Incoming Oil Slick Shell
             if (data.slickTarget === myTeam && (!window.lastObservedSlickId || window.lastObservedSlickId !== data.slickId)) {
                 window.lastObservedSlickId = data.slickId;
                 activateSlickCover();
             }
 
-            // Handle Incoming Quantum Warp EMP
             if (data.empTarget === myTeam && (!window.lastObservedEmpId || window.lastObservedEmpId !== data.empId)) {
                 window.lastObservedEmpId = data.empId;
                 triggerLockoutPenalty(true, 3.5);
@@ -1173,7 +1158,6 @@
 
             for (let i = 0; i < 7; i++) {
                 const targetNum = i + 1;
-                // Blue badge
                 const isBlueDone = i < bS;
                 const isBlueActive = i === bS;
                 bRow.innerHTML += `
@@ -1189,7 +1173,6 @@
                     </div>
                 `;
 
-                // Red badge
                 const isRedDone = i < rS;
                 const isRedActive = i === rS;
                 rRow.innerHTML += `
@@ -1210,7 +1193,6 @@
         function updatePipelineUI(data) {
             const team = myTeam;
 
-            // Handle Spectator / Broadcaster View
             if (team === 'spectator') {
                 const specPanel = document.getElementById('spectator-broadcast-panel');
                 const slopeControl = document.getElementById('slope-choice-control');
@@ -1267,7 +1249,6 @@
                     instEl.innerHTML = `<span class="text-yellow-300">📡 [실시간 중계 중] 양 팀의 일차함수 레일 레이스를 관전하고 있습니다.</span>`;
                 }
 
-                // Display leading team's mission in clue box
                 const leadMission = bScore >= rScore ? data.blueMission : data.redMission;
                 if (leadMission) {
                     const clueEl = document.getElementById('circuit-clue-display');
@@ -1276,7 +1257,6 @@
                 return;
             }
 
-            // Normal Student Pipeline UI
             const myRawMembers = team === 'blue' ? (data.blueMembers || []) : (data.redMembers || []);
             const myMembers = cleanMemberList(myRawMembers);
             const currentStage = team === 'blue' ? (data.blueStage || 0) : (data.redStage || 0);
@@ -1289,7 +1269,6 @@
             document.getElementById('circuit-clue-display').innerText = currentMission.clueText;
             document.getElementById('current-op-name').innerText = `${currentMission.trackName}`;
 
-            // Update Puzzle HUD Slots
             const slotSlope = document.getElementById('slot-slope');
             const slotIntercept = document.getElementById('slot-intercept');
             const slotGate = document.getElementById('slot-gate');
@@ -1358,7 +1337,6 @@
             const currentActorEl = document.getElementById('current-actor-name');
             const stepNumInput = document.getElementById('step-number-input');
 
-            // Prevent input auto-clearing unless stage actually changes
             const isStageChanged = (lastRenderedStage !== currentStage || lastRenderedTarget !== targetNum);
             lastRenderedStage = currentStage;
             lastRenderedTarget = targetNum;
@@ -1506,12 +1484,28 @@
         };
 
         window.openBoosterModal = function() {
+            // ★ [연타 방지 가드 1] 이미 처리 중이면 모달 오픈 차단
+            if (isActionProcessing) return;
             document.getElementById('payload-modal').classList.remove('hidden');
         };
 
         window.chooseBoosterPayload = async function(payloadType) {
+            // ★ [연타 방지 가드 2] 즉시 잠금 설정 및 버튼 비활성화
+            if (isActionProcessing) return;
+            isActionProcessing = true;
+
+            const fireActionBtn = document.getElementById('fire-action-btn');
+            if (fireActionBtn) {
+                fireActionBtn.disabled = true;
+                fireActionBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
             document.getElementById('payload-modal').classList.add('hidden');
-            if (!lastKnownRoomData) return;
+            if (!lastKnownRoomData) {
+                isActionProcessing = false;
+                return;
+            }
+
             const data = lastKnownRoomData;
             const enemyTeam = myTeam === 'blue' ? 'red' : 'blue';
             const mission = myTeam === 'blue' ? data.blueMission : data.redMission;
@@ -1539,10 +1533,9 @@
 
             // Distinct tactical payload actions
             if (payloadType === 'hyper_nitro') {
-                // Hyper Nitro: +1 point AND automatic skip of next circuit's stage 0! (Starts at stage 1!)
                 if (myTeam === 'blue') {
                     nextData.blueScore = nextScore;
-                    nextData.blueStage = 1; // Stage 0 automatically solved!
+                    nextData.blueStage = 1;
                     nextData.blueMission = nextMission;
                 } else {
                     nextData.redScore = nextScore;
@@ -1552,7 +1545,6 @@
                 showStepFeedback(`🚀 [하이퍼 니트로 가동!] 1,200 km/h 질주! 서킷 완주 (+1점) & 다음 서킷 1단계 자동 결속 보너스!`, false);
 
             } else if (payloadType === 'oil_slick') {
-                // Oil Slick: +1 point AND fling black oil slick onto enemy screen
                 if (myTeam === 'blue') {
                     nextData.blueScore = nextScore;
                     nextData.blueStage = 0;
@@ -1567,7 +1559,6 @@
                 showStepFeedback(`🛢️ [오일 슬릭탄 발사!] 서킷 완주 (+1점) & 상대 윈드실드에 오일 얼룩 투척!`, false);
 
             } else { // quantum_warp
-                // Quantum Warp: +1 point AND EMP stun enemy cart engine for 3.5 seconds
                 if (myTeam === 'blue') {
                     nextData.blueScore = nextScore;
                     nextData.blueStage = 0;
@@ -1581,6 +1572,10 @@
                 nextData.empId = boosterId;
                 showStepFeedback(`⚡ [양자 도약 EMP 발사!] 초광속 워프 (+1점) & 상대 카트 3.5초 엔진 긴급 정지!`, false);
             }
+
+            setTimeout(() => {
+                isActionProcessing = false;
+            }, 850);
 
             nextData.updatedAt = Date.now();
             await syncStateUpdate(nextData);
@@ -1642,9 +1637,6 @@
             }, 1000);
         }
 
-        // ==========================================
-        // 🚀 DYNAMIC NEON RAIL 2D CANVAS ENGINE
-        // ==========================================
         let canvas, ctx;
         let tacticalPings = [];
         let speedBoosters = [];
@@ -1723,11 +1715,10 @@
                 progress: 0
             });
 
-            // Trigger visual screen shake
             const arenaBox = canvas.parentElement;
             if (arenaBox) {
                 arenaBox.classList.remove('screen-shaking');
-                void arenaBox.offsetWidth; // trigger reflow
+                void arenaBox.offsetWidth;
                 arenaBox.classList.add('screen-shaking');
                 setTimeout(() => arenaBox.classList.remove('screen-shaking'), 380);
             }
@@ -1757,13 +1748,11 @@
             const h = canvas.height;
             const midX = w / 2;
             const midY = h / 2;
-            const scale = Math.min(w, h) / 13; // 1 coordinate unit on math plane
+            const scale = Math.min(w, h) / 13;
 
-            // 1. Synthwave Grid Background
             ctx.fillStyle = '#020617';
             ctx.fillRect(0, 0, w, h);
 
-            // 2. Coordinate Grid & Axes
             if (showGridPlane) {
                 ctx.save();
                 ctx.strokeStyle = 'rgba(56, 189, 248, 0.14)';
@@ -1780,7 +1769,6 @@
                     ctx.stroke();
                 }
 
-                // Main X & Y Axis Lines
                 ctx.strokeStyle = '#38bdf8';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
@@ -1790,7 +1778,6 @@
                 ctx.lineTo(midX, h);
                 ctx.stroke();
 
-                // Axis Numbers
                 ctx.font = 'bold 10px "JetBrains Mono", monospace';
                 ctx.fillStyle = '#67e8f9';
                 ctx.textAlign = 'center';
@@ -1801,34 +1788,28 @@
                     ctx.fillText(i, midX - 12, midY - i * scale);
                 }
                 ctx.fillText("O", midX - 8, midY + 10);
-                ctx.fillText("x", w - 10, midY - 10);
-                ctx.fillText("y", midX + 10, 10);
                 ctx.restore();
             }
 
-            // 3. Draw Active Linear Function Trajectory with Dynamic Assembly
             if (lastKnownRoomData) {
                 const mission = myTeam === 'spectator'
                     ? ((lastKnownRoomData.blueScore || 0) >= (lastKnownRoomData.redScore || 0) ? lastKnownRoomData.blueMission : lastKnownRoomData.redMission)
                     : (myTeam === 'blue' ? lastKnownRoomData.blueMission : lastKnownRoomData.redMission);
                 const currentStage = myTeam === 'spectator'
-                    ? ((lastKnownRoomData.blueScore || 0) >= (lastKnownRoomData.redScore || 0) ? (lastKnownRoomData.blueStage || 0) : (lastKnownRoomData.redStage || 0))
+                    ? ((lastKnownRoomData.blueScore || 0) >= (lastKnownRoomData.redScore || 0) ? lastKnownRoomData.blueStage || 0 : lastKnownRoomData.redStage || 0)
                     : (myTeam === 'blue' ? (lastKnownRoomData.blueStage || 0) : (lastKnownRoomData.redStage || 0));
                 drawActiveNeonRailway(midX, midY, scale, mission, currentStage);
             }
 
-            // 4. Opponent PiP Mini Race Feed (Top Right)
             drawOpponentMiniFeed(w - 135, 45);
 
-            // 5. High-Speed 1,200 km/h Sonic Warp Cart Leap Simulation
             for (let i = speedBoosters.length - 1; i >= 0; i--) {
                 const b = speedBoosters[i];
-                b.progress += 0.038; // Ultra fast supersonic motion
+                b.progress += 0.038;
 
                 const a = b.mission.a;
                 const mB = b.mission.b;
 
-                // Travel across x from -5.5 to +5.5 along y = ax + b
                 const startX = -5.5;
                 const endX = 5.5;
                 const curMathX = startX + (endX - startX) * b.progress;
@@ -1844,17 +1825,14 @@
                 ctx.shadowBlur = 24;
                 ctx.shadowColor = cartColor;
 
-                // Cart Rotation Angle along line
                 const lineAngle = -Math.atan(a);
                 ctx.translate(curCanvasX, curCanvasY);
                 ctx.rotate(lineAngle);
 
-                // Supersonic Aerodynamic Kart Body
                 ctx.beginPath();
                 ctx.roundRect ? ctx.roundRect(-18, -8, 36, 16, 4) : ctx.rect(-18, -8, 36, 16);
                 ctx.fill();
 
-                // Warp Thruster Flame Particles
                 for (let t = 0; t < 3; t++) {
                     sonicBooms.push({
                         x: curCanvasX + (Math.random() - 0.5) * 8,
@@ -1868,7 +1846,6 @@
                 }
                 ctx.restore();
 
-                // Shockwave when passing gate ring
                 if (Math.abs(curMathX - b.mission.xGate) < 0.3 && !b.gateExploded) {
                     b.gateExploded = true;
                     sfx.playTone(880, 'sine', 0.25, 0.4);
@@ -1878,7 +1855,6 @@
                 if (b.progress >= 1) speedBoosters.splice(i, 1);
             }
 
-            // 6. Tactical Pings
             for (let i = tacticalPings.length - 1; i >= 0; i--) {
                 const p = tacticalPings[i];
                 p.radius += 0.9;
@@ -1900,7 +1876,6 @@
                 if (p.alpha <= 0) tacticalPings.splice(i, 1);
             }
 
-            // 7. Sonic Boom & Thruster Particles
             for (let i = sonicBooms.length - 1; i >= 0; i--) {
                 const exp = sonicBooms[i];
                 exp.x += exp.vx;
@@ -1932,14 +1907,11 @@
             const b = mission.b;
             const isRailLocked = currentStage >= 3;
 
-            // 1. Clue Points P1(x1, y1) & P2(x2, y2)
-            // (NO Δx, Δy spoiler labels! Students must read grid ticks or calculate themselves)
             const p1CanvasX = cx + mission.x1 * scale;
             const p1CanvasY = cy - mission.y1 * scale;
             const p2CanvasX = cx + mission.x2 * scale;
             const p2CanvasY = cy - mission.y2 * scale;
 
-            // Draw Point 1 Beacon
             ctx.fillStyle = '#38bdf8';
             ctx.shadowBlur = 12;
             ctx.shadowColor = '#38bdf8';
@@ -1952,20 +1924,16 @@
             ctx.textAlign = 'right';
             ctx.fillText(`P1(${mission.x1}, ${mission.y1})`, p1CanvasX - 8, p1CanvasY - 4);
 
-            // Draw Point 2 Beacon
             ctx.beginPath();
             ctx.arc(p2CanvasX, p2CanvasY, 5.5, 0, Math.PI * 2);
             ctx.fill();
             ctx.textAlign = 'left';
             ctx.fillText(`P2(${mission.x2}, ${mission.y2})`, p2CanvasX + 8, p2CanvasY - 4);
 
-            // 2. Exact Linear Function Neon Rail (y = ax + b) with Dynamic Mechanical Assembly
-            // Visible range: x from -6 to +6
             const xLeft = -6;
             const xRight = 6;
 
             if (currentStage >= 2) {
-                // Stage >= 2: Full Equation y = ax + b firmly locked into place!
                 const yLeft = a * xLeft + b;
                 const yRight = a * xRight + b;
 
@@ -1974,13 +1942,11 @@
                 ctx.shadowBlur = isRailLocked ? 24 : 14;
                 ctx.shadowColor = '#06b6d4';
 
-                // Main Rail Beam
                 ctx.beginPath();
                 ctx.moveTo(cx + xLeft * scale, cy - yLeft * scale);
                 ctx.lineTo(cx + xRight * scale, cy - yRight * scale);
                 ctx.stroke();
 
-                // Dual Parallel Cyber Tracks when fully assembled
                 ctx.lineWidth = 1.5;
                 ctx.setLineDash([8, 6]);
                 const normAngle = Math.atan(a) + Math.PI / 2;
@@ -1997,8 +1963,6 @@
                 ctx.setLineDash([]);
 
             } else if (currentStage === 1) {
-                // Stage 1: Slope is confirmed! But y-intercept is NOT locked yet.
-                // The rail rotates to the correct slope, but vertically floats/oscillates to show it's awaiting intercept!
                 const floatOffset = Math.sin(Date.now() / 180) * 1.2;
                 const tempB = b + floatOffset;
                 const yLeft = a * xLeft + tempB;
@@ -2017,8 +1981,6 @@
                 ctx.setLineDash([]);
 
             } else {
-                // Stage 0: Slope is NOT confirmed!
-                // The rail is broken/unaligned (horizontal scan guide at origin), showing angle is uncalibrated
                 const unalignedAngle = Math.sin(Date.now() / 400) * 0.15;
                 ctx.save();
                 ctx.translate(cx, cy);
@@ -2039,13 +2001,10 @@
                 ctx.restore();
             }
 
-            // 3. Highlight y-Intercept (0, b)
-            // 풀기 전(currentStage < 2)에는 y축 위 특정 정답 위치에 원이나 텍스트를 절대 표시하지 않음 (스포일러 방지)
             if (currentStage >= 2) {
                 const interceptCanvasX = cx;
                 const interceptCanvasY = cy - b * scale;
 
-                // y-intercept fixed and locked after user solves Step 2!
                 ctx.fillStyle = '#facc15';
                 ctx.shadowBlur = 18;
                 ctx.shadowColor = '#facc15';
@@ -2060,14 +2019,12 @@
                 ctx.fillText(`y절편 (0, ${b}) 결속!`, interceptCanvasX + textOffsetX, interceptCanvasY - 4);
             }
 
-            // 4. Target Booster Gate (xGate, yGate)
             const gateCanvasX = cx + mission.xGate * scale;
             let gateCanvasY = cy - mission.yGate * scale;
 
             ctx.save();
 
             if (currentStage >= 3) {
-                // Stage 3: Gate 100% Locked on the rail!
                 ctx.translate(gateCanvasX, gateCanvasY);
                 const pulse = Math.sin(Date.now() / 140) * 4;
                 const ringR = 22 + pulse;
@@ -2090,7 +2047,6 @@
                 ctx.fillText(`게이트 (${mission.xGate}, ${mission.yGate}) 락온!`, 0, -ringR - 10);
 
             } else {
-                // Stage 0, 1, 2: Gate y is UNKNOWN! It oscillates vertically along x = xGate
                 const gateOscillate = Math.sin(Date.now() / 250) * 25;
                 const floatingY = (currentStage >= 2) ? (gateCanvasY + gateOscillate) : (cy + gateOscillate);
                 
@@ -2109,12 +2065,10 @@
             }
             ctx.restore();
 
-            // 5. Standby Cart on the Rail Launch Dock
             if (speedBoosters.length === 0) {
                 let cartXMath = -4.5;
                 let cartYMath = (currentStage >= 2) ? (a * cartXMath + b) : 0;
                 
-                // Clamp within reasonable canvas bounds
                 if (Math.abs(cartYMath) > 5) {
                     cartXMath = a > 0 ? -2 : 2;
                     cartYMath = (currentStage >= 2) ? (a * cartXMath + b) : 0;
@@ -2129,7 +2083,6 @@
                 const angle = (currentStage >= 1) ? -Math.atan(a) : 0;
                 ctx.rotate(angle);
 
-                // Cart Body
                 ctx.fillStyle = '#0f172a';
                 ctx.strokeStyle = currentStage === 3 ? '#facc15' : '#38bdf8';
                 ctx.lineWidth = 2.5;
@@ -2140,7 +2093,6 @@
                 ctx.fill();
                 ctx.stroke();
 
-                // Exhaust flame when ready to launch
                 if (currentStage === 3) {
                     ctx.fillStyle = '#f97316';
                     ctx.beginPath();
@@ -2161,7 +2113,6 @@
                     ctx.fillText("STANDBY", 0, -10);
                 }
 
-                // Headlight
                 ctx.fillStyle = '#facc15';
                 ctx.beginPath();
                 ctx.arc(14, 0, 2.5, 0, Math.PI * 2);
